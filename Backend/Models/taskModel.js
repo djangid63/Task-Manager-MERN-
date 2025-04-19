@@ -6,6 +6,10 @@ const notesSchema = new Schema({
   content: String,
   category: String,
   color: String,
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'user'
+  }
 })
 
 module.exports = mongoose.model("notes", notesSchema)

@@ -9,10 +9,18 @@ function App() {
   const [notes, setNotes] = useState([]);
   const [searchStr, setSearchStr] = useState('')
 
+  const token = localStorage.getItem('token')
+
   const fetchData = async () => {
     try {
-      const getDb = await axios.get('http://localhost:5000/task/getTasks');
-      console.log(getDb);
+      const token = localStorage.getItem('token')
+      console.log("token form storage--------", token);
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+      const getDb = await axios.get('http://localhost:5000/task/getTasks', config);
       setNotes(getDb.data.taskData)
     } catch (error) {
       console.error('Error fetching notes:', error);
@@ -27,12 +35,16 @@ function App() {
   // To delete the data on the basis of _ID
   async function handleDelete(id) {
     try {
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
       if (!id) {
         console.error("Cannot delete note: ID is undefined");
         return;
       }
-      console.log("Deleting note with ID:", id);
-      await axios.delete(`http://localhost:5000/task/deleteTask/${id}`);
+      await axios.delete(`http://localhost:5000/task/deleteTask/${id}`, config);
 
       // Update the notes state to remove the deleted note
       setNotes(notes.filter(note => note._id !== id));
@@ -46,7 +58,13 @@ function App() {
 
   const updateNote = async (id, updatedNote) => {
     try {
-      const response = await axios.patch(`http://localhost:5000/task/updateTasks/${id}`, updatedNote);
+      console.log("token form storage--------", token);
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+      const response = await axios.patch(`http://localhost:5000/task/updateTasks/${id}`, updatedNote, config);
       console.log('Updated Note:', response.data);
 
       //  Show the new updated data
@@ -103,10 +121,13 @@ function App() {
   // Handle adding new note
   const handleAddNote = async () => {
     if (newNote.title.trim() !== '' && newNote.content.trim() !== '') {
-
-
       try {
-        await axios.post('http://localhost:5000/task/addTask', newNote);
+        const config = {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+        await axios.post('http://localhost:5000/task/addTask', newNote, config);
       } catch (error) {
         console.error("Error while posting", error);
       }

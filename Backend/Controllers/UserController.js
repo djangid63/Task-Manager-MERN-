@@ -9,6 +9,7 @@ exports.SignUpUser = async (req, res) => {
     const { firstname, lastname, email, password } = req.body
 
     const isMailExists = await userModel.findOne({ email })
+
     if (isMailExists) {
       return res.status(409).json({ status: false, message: "Email already exists" })
     }
@@ -16,9 +17,10 @@ exports.SignUpUser = async (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(password, salt)
 
+
     const signData = new userModel({ firstname, lastname, email, password: hashedPassword })
     const saveData = await signData.save()
-    return res.status(201).json({ success: true, message: "Sign up successfully" })
+    return res.status(201).json({ success: true, message: "Sign up successfully", data: saveData })
   } catch (error) {
     console.log("User sign up failed :", error);
     return res.status(400).json({ success: false, message: "Sign up failed" })

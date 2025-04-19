@@ -1,17 +1,23 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import BASE_URL from '../api';
 import axios from "axios"
 
+
 const Signup = () => {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    firstname: '',
+    lastname: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
 
+  const navigate = useNavigate()
+
+  const navigateToLogin = () => {
+    navigate('/')
+  }
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevState => ({
@@ -28,11 +34,10 @@ const Signup = () => {
     }
     console.log('Signup attempt with:', formData);
 
-    console.log(`${BASE_URL}/user/signup`);
     try {
-      const response = await axios.post(`${BASE_URL}/user/signup`,
-        formData)
+      const response = await axios.post(`${BASE_URL}/user/signup`, formData)
       console.log(response.data.message);
+      navigateToLogin()
     } catch (error) {
       console.log("Sign up failed", error);
     }
@@ -64,28 +69,28 @@ const Signup = () => {
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">First name</label>
+                  <label htmlFor="firstname" className="block text-sm font-medium text-gray-700 mb-1">First name</label>
                   <input
-                    id="firstName"
-                    name="firstName"
+                    id="firstname"
+                    name="firstname"
                     type="text"
                     required
                     className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out sm:text-sm"
                     placeholder="John"
-                    value={formData.firstName}
+                    value={formData.firstname}
                     onChange={handleChange}
                   />
                 </div>
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
+                  <label htmlFor="lastname" className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
                   <input
-                    id="lastName"
-                    name="lastName"
+                    id="lastname"
+                    name="lastname"
                     type="text"
                     required
                     className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out sm:text-sm"
                     placeholder="Doe"
-                    value={formData.lastName}
+                    value={formData.lastname}
                     onChange={handleChange}
                   />
                 </div>
