@@ -165,11 +165,10 @@ const Dashboard = () => {
                   <tr key={task.id} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="py-3 px-4 text-gray-800">{task.title}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        task.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                        task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                          task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                        }`}>
                         {task.status}
                       </span>
                     </td>
@@ -189,13 +188,13 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 animate-slideFromTop">Dashboard</h1>
-          <p className="text-gray-600 animate-slideFromBottom">Welcome to your task management dashboard</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 animate-slideFromTop drop-shadow-lg tracking-tight">Dashboard</h1>
+          <p className="text-gray-600 animate-slideFromBottom text-lg">Welcome to your task management dashboard</p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
           {/* Admin Card */}
-          <div 
+          <div
             className={`${cardColors.admins.bg} ${cardColors.admins.hover} ${cardColors.admins.border} border rounded-lg shadow-md p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'admins' ? 'ring-4 ring-blue-300 scale-105' : ''}`}
             onClick={() => handleCardClick('admins')}
           >
@@ -209,7 +208,7 @@ const Dashboard = () => {
           </div>
 
           {/* Users Card */}
-          <div 
+          <div
             className={`${cardColors.users.bg} ${cardColors.users.hover} ${cardColors.users.border} border rounded-lg shadow-md p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'users' ? 'ring-4 ring-green-300 scale-105' : ''}`}
             onClick={() => handleCardClick('users')}
           >
@@ -223,7 +222,7 @@ const Dashboard = () => {
           </div>
 
           {/* Tasks Card */}
-          <div 
+          <div
             className={`${cardColors.tasks.bg} ${cardColors.tasks.hover} ${cardColors.tasks.border} border rounded-lg shadow-md p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'tasks' ? 'ring-4 ring-purple-300 scale-105' : ''}`}
             onClick={() => handleCardClick('tasks')}
           >
@@ -236,11 +235,11 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Render details based on selected card */}
         {renderDetails()}
       </div>
-      
+
       <style jsx>{`
         @keyframes fadeIn {
           from { opacity: 0; }
