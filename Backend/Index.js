@@ -5,7 +5,7 @@ const app = express()
 const port = 5000;
 
 const taskRouter = require("./Routes/taskRouter")
-const userRouter = require("./Routes/UserRouter")
+const userRouter = require("./Routes/userRouter")
 
 app.use(cors())
 app.use(express.json())

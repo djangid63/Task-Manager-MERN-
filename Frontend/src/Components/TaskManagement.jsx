@@ -23,11 +23,6 @@ function App() {
     fetchData()
   }, [])
 
-  // useEffect(() => {
-  //   fetchData()
-  // }, [notes])
-
-  // console.log("hiii");
 
   // To delete the data on the basis of _ID
   async function handleDelete(id) {
@@ -51,7 +46,7 @@ function App() {
 
   const updateNote = async (id, updatedNote) => {
     try {
-      const response = await axios.patch(`http://localhost:5000/${id}`, updatedNote);
+      const response = await axios.patch(`http://localhost:5000/task/updateTasks/${id}`, updatedNote);
       console.log('Updated Note:', response.data);
 
       //  Show the new updated data
@@ -108,12 +103,9 @@ function App() {
   const handleAddNote = async () => {
     if (newNote.title.trim() !== '' && newNote.content.trim() !== '') {
 
-      const newNoteObject = {
-        ...newNote,
-      };
 
       try {
-        await axios.post('http://localhost:5000/task/addTask', newNoteObject);
+        await axios.post('http://localhost:5000/task/addTask', newNote);
       } catch (error) {
         console.error("Error while posting", error);
       }

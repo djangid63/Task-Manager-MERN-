@@ -7,5 +7,6 @@ const taskController = require('../Controllers/taskController')
 router.post('/addTask', taskController.addTask)
 router.delete('/deleteTask/:id', taskController.deleteTask)
 router.get('/getTasks', taskController.getTasks)
+router.patch('/updateTasks/:id', taskController.updateTask)
 
 module.exports = router
