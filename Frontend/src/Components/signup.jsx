@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import BASE_URL from '../api';
+import axios from "axios"
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -18,14 +20,22 @@ const Signup = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords don't match!"); // Simple validation
       return;
     }
     console.log('Signup attempt with:', formData);
-    // Backend integration logic goes here
+
+    console.log(`${BASE_URL}/user/signup`);
+    try {
+      const response = await axios.post(`${BASE_URL}/user/signup`,
+        formData)
+      console.log(response.data.message);
+    } catch (error) {
+      console.log("Sign up failed", error);
+    }
   };
 
   return (
