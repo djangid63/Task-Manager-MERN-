@@ -93,11 +93,12 @@ function App() {
   const filteredNotes = activeCategory === 'All'
     ? notes
     : notes.filter(note => note.category === activeCategory);
+  console.log(filteredNotes);
 
   // Searching
-  // const searchedData = filteredNotes.filter((note) =>
-  //   searchStr != "" ? note.title.toLowerCase().includes(searchStr.toLowerCase()) : filteredNotes
-  // );
+  const searchedData = filteredNotes.filter((note) =>
+    searchStr != "" ? note.title.toLowerCase().includes(searchStr.toLowerCase()) : filteredNotes
+  );
 
   // Handle adding new note
   const handleAddNote = async () => {
@@ -242,7 +243,7 @@ function App() {
 
         {/* Notes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {notes.map(note => (
+          {searchedData.map(note => (
             <div key={note._id} className={`${note.color} rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow`}>
               <div className="flex justify-between items-start mb-3">
                 <h3 className="font-medium text-lg text-gray-800">{note.title}</h3>
