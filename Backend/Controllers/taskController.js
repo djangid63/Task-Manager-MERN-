@@ -76,26 +76,6 @@ exports.deleteTask = async (req, res) => {
   }
 }
 
-// Get task by ID with populated user information
-exports.getTaskById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Find task by ID only if it's not disabled
-    const task = await taskModel.findOne({ _id: id, isDisabled: false })
-      .populate('userId');
-
-    if (!task) {
-      // Keep the message generic, as it could be not found or disabled
-      return res.status(404).json({ success: false, message: "Task not found" });
-    }
-
-    return res.status(200).json({ success: true, task });
-  } catch (error) {
-    console.log("--------get task by id---------", error);
-    return res.status(500).json({ success: false, message: "Failed to fetch task" });
-  }
-}
 
 // Get tasks for the logged-in user with populated user data
 exports.getUserTasks = async (req, res) => {

@@ -166,8 +166,8 @@ const Dashboard = () => {
                     <td className="py-3 px-4 text-gray-800">{task.title}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                          task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
+                        task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
                         }`}>
                         {task.status}
                       </span>
@@ -185,59 +185,70 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2 animate-slideFromTop drop-shadow-lg tracking-tight">Dashboard</h1>
-          <p className="text-gray-600 animate-slideFromBottom text-lg">Welcome to your task management dashboard</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-          {/* Admin Card */}
-          <div
-            className={`${cardColors.admins.bg} ${cardColors.admins.hover} ${cardColors.admins.border} border rounded-lg shadow-md p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'admins' ? 'ring-4 ring-blue-300 scale-105' : ''}`}
-            onClick={() => handleCardClick('admins')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className={`text-xl font-bold ${cardColors.admins.text}`}>Total Admins</h2>
-                <p className="text-4xl font-bold mt-2 text-gray-800">{stats.admins.total}</p>
-              </div>
-              {renderIcon('admins')}
-            </div>
-          </div>
-
-          {/* Users Card */}
-          <div
-            className={`${cardColors.users.bg} ${cardColors.users.hover} ${cardColors.users.border} border rounded-lg shadow-md p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'users' ? 'ring-4 ring-green-300 scale-105' : ''}`}
-            onClick={() => handleCardClick('users')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className={`text-xl font-bold ${cardColors.users.text}`}>Total Users</h2>
-                <p className="text-4xl font-bold mt-2 text-gray-800">{stats.users.total}</p>
-              </div>
-              {renderIcon('users')}
-            </div>
-          </div>
-
-          {/* Tasks Card */}
-          <div
-            className={`${cardColors.tasks.bg} ${cardColors.tasks.hover} ${cardColors.tasks.border} border rounded-lg shadow-md p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'tasks' ? 'ring-4 ring-purple-300 scale-105' : ''}`}
-            onClick={() => handleCardClick('tasks')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className={`text-xl font-bold ${cardColors.tasks.text}`}>Total Tasks</h2>
-                <p className="text-4xl font-bold mt-2 text-gray-800">{stats.tasks.total}</p>
-              </div>
-              {renderIcon('tasks')}
-            </div>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 p-4">
+      <div className="w-full max-w-7xl flex flex-col md:flex-row bg-white rounded-2xl shadow-xl overflow-hidden" style={{ minHeight: '90vh' }}>
+        <div className="hidden md:flex md:w-1/4 bg-gradient-to-br from-blue-500 to-indigo-600 p-8 md:p-12 flex-col justify-center items-center text-white relative">
+          <div className="absolute inset-0 bg-black opacity-10 z-0"></div>
+          <div className="relative z-10 text-center">
+            <svg className="w-24 h-24 mx-auto text-indigo-200 opacity-80 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+            <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
+            <p className="text-base text-indigo-100">
+              Overview of your Task Manager.
+            </p>
           </div>
         </div>
 
-        {/* Render details based on selected card */}
-        {renderDetails()}
+        <div className="w-full md:w-2/3 flex flex-col p-6 sm:p-8 overflow-y-auto">
+          <div className="text-center mb-8 md:text-left">
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">Welcome Back!</h1>
+            <p className="text-gray-600 text-md">Here's your task management overview.</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div
+              className={`${cardColors.admins.bg} ${cardColors.admins.hover} ${cardColors.admins.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'admins' ? 'ring-4 ring-blue-300 scale-105' : ''}`}
+              onClick={() => handleCardClick('admins')}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-lg font-semibold ${cardColors.admins.text}`}>Admins</h2>
+                  <p className="text-3xl font-bold mt-1 text-gray-800">{stats.admins.total}</p>
+                </div>
+                {renderIcon('admins')}
+              </div>
+            </div>
+
+            <div
+              className={`${cardColors.users.bg} ${cardColors.users.hover} ${cardColors.users.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'users' ? 'ring-4 ring-green-300 scale-105' : ''}`}
+              onClick={() => handleCardClick('users')}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-lg font-semibold ${cardColors.users.text}`}>Users</h2>
+                  <p className="text-3xl font-bold mt-1 text-gray-800">{stats.users.total}</p>
+                </div>
+                {renderIcon('users')}
+              </div>
+            </div>
+
+            <div
+              className={`${cardColors.tasks.bg} ${cardColors.tasks.hover} ${cardColors.tasks.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'tasks' ? 'ring-4 ring-purple-300 scale-105' : ''}`}
+              onClick={() => handleCardClick('tasks')}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-lg font-semibold ${cardColors.tasks.text}`}>Tasks</h2>
+                  <p className="text-3xl font-bold mt-1 text-gray-800">{stats.tasks.total}</p>
+                </div>
+                {renderIcon('tasks')}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-grow">
+            {renderDetails()}
+          </div>
+        </div>
       </div>
 
       <style jsx>{`
@@ -247,20 +258,6 @@ const Dashboard = () => {
         }
         .animate-fadeIn {
           animation: fadeIn 0.6s ease-in-out;
-        }
-        @keyframes slideFromTop {
-          from { transform: translateY(-20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-slideFromTop {
-          animation: slideFromTop 0.5s ease-out;
-        }
-        @keyframes slideFromBottom {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-slideFromBottom {
-          animation: slideFromBottom 0.5s ease-out;
         }
       `}</style>
     </div>
