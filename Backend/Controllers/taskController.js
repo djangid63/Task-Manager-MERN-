@@ -77,12 +77,10 @@ exports.deleteTask = async (req, res) => {
 }
 
 
-// Get tasks for the logged-in user with populated user data
 exports.getUserTasks = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // Find tasks for the user only if they are not disabled
     const tasks = await taskModel.find({ userId, isDisabled: false })
       .populate('userId');
 

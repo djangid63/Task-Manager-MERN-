@@ -83,9 +83,17 @@ const Dashboard = () => {
   }, []);
 
   // Show admin Data
-
-  
-
+  const getAdmins = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/admin/getAdmins`)
+      console.log(response);
+      if (response.data.status) {
+        console.log("Admins data successfully fetched", response.message);
+      }
+    } catch (error) {
+      console.log("-----Admin Data-----", error);
+    }
+  }
 
   // State to track which card is selected
   const [selectedCard, setSelectedCard] = useState(null);
@@ -257,7 +265,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div
               className={`${cardColors.admins.bg} ${cardColors.admins.hover} ${cardColors.admins.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'admins' ? 'ring-4 ring-blue-300 scale-105' : ''}`}
-              onClick={() => handleCardClick('admins')}
+              onClick={() => { handleCardClick('admins'); getAdmins() }}
             >
               <div className="flex items-center justify-between">
                 <div>

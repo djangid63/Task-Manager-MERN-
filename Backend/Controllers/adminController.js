@@ -19,3 +19,21 @@ exports.count = async (req, res) => {
     return res.status(500).json({ status: false, message: "Failed to count admins", error: error.message });
   }
 }
+
+exports.getAdmins = async (req, res) => {
+  try {
+
+    // Find tasks for the user only if they are not disabled
+    const admins = await adminModel.find()
+    console.log("---------admins----------", admins);
+
+    return res.status(200).json({
+      success: true,
+      message: "Admins data fetched successfully",
+      AdminData: admins
+    });
+  } catch (error) {
+    console.log("--------get admins---------", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch Admins" });
+  }
+}
