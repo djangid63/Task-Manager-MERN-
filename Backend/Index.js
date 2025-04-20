@@ -6,6 +6,7 @@ const port = 5000;
 
 const taskRouter = require("./Routes/taskRouter")
 const userRouter = require("./Routes/userRouter")
+const adminRouter = require('./Routes/adminRouter')
 
 app.use(cors())
 app.use(express.json())
@@ -18,6 +19,7 @@ mongoose.connect(mongoURL)
 
 app.use("/user", userRouter)
 app.use("/task", taskRouter)
+app.use("/admin", adminRouter)
 
 app.listen(port, () => {
   console.log(`It's running on ${port} server`);
