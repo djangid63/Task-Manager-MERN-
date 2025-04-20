@@ -19,7 +19,7 @@ exports.addTask = async (req, res) => {
 
     const populatedTask = await taskModel.findById(saveTask._id)
       .populate('userId')
- 
+
 
     return res.status(201).json({
       success: true,
@@ -94,5 +94,14 @@ exports.getUserTasks = async (req, res) => {
   } catch (error) {
     console.log("--------get user tasks---------", error);
     return res.status(500).json({ success: false, message: "Failed to fetch user tasks" });
+  }
+}
+
+exports.count = async (req, res) => {
+  try {
+    const totalTask = await taskModel.countDocuments();
+    return res.status(200).json({ status: true, count: totalTask });
+  } catch (error) {
+    return res.status(500).json({ status: false, message: "Failed to count task", error: error.message });
   }
 }

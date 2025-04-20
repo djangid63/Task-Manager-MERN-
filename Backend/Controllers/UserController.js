@@ -47,3 +47,12 @@ exports.login = async (req, res) => {
 
   return res.status(201).json({ success: true, message: "Login successful", token })
 }
+
+exports.count = async (req, res) => {
+  try {
+    const totalUser = await userModel.countDocuments();
+    return res.status(200).json({ status: true, count: totalUser });
+  } catch (error) {
+    return res.status(500).json({ status: false, message: "Failed to count user", error: error.message });
+  }
+}

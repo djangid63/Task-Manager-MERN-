@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
+import BASE_URL from './../api';
 
 const Dashboard = () => {
+  const [adminCount, setAdminCount] = useState(0);
+  const [userCount, setUserCount] = useState(0);
+  const [taskCount, setTaskCount] = useState(0);
+
   // Dummy static data
   const stats = {
     admins: {
-      total: 5,
       details: [
         { id: 1, name: "John Doe", email: "john@example.com", role: "Super Admin" },
         { id: 2, name: "Jane Smith", email: "jane@example.com", role: "System Admin" },
@@ -36,6 +41,51 @@ const Dashboard = () => {
       ]
     }
   };
+
+  // Admin count
+  const fetchAdminCount = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/admin/count`);
+      setAdminCount(response.data.count); // Update state
+      console.log("Admin count fetched:", response.data.count);
+    } catch (error) {
+      console.log("Count error log", error);
+    }
+  };
+
+  // User count
+  const fetchUserCount = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/user/count`);
+      setUserCount(response.data.count); // Update state
+      console.log("user count fetched:", response.data.count);
+    } catch (error) {
+      console.log("Count error log", error);
+    }
+  };
+
+
+  // Task count
+  const fetchTaskCount = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/task/count`);
+      setTaskCount(response.data.count);
+      console.log("user count fetched:", response.data.count);
+    } catch (error) {
+      console.log("Count error log", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAdminCount();
+    fetchUserCount();
+    fetchTaskCount();
+  }, []);
+
+  // Show admin Data
+
+  
+
 
   // State to track which card is selected
   const [selectedCard, setSelectedCard] = useState(null);
@@ -212,7 +262,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className={`text-lg font-semibold ${cardColors.admins.text}`}>Admins</h2>
-                  <p className="text-3xl font-bold mt-1 text-gray-800">{stats.admins.total}</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-800">{adminCount}</p>
                 </div>
                 {renderIcon('admins')}
               </div>
@@ -225,7 +275,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className={`text-lg font-semibold ${cardColors.users.text}`}>Users</h2>
-                  <p className="text-3xl font-bold mt-1 text-gray-800">{stats.users.total}</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-800">{userCount}</p>
                 </div>
                 {renderIcon('users')}
               </div>
@@ -238,7 +288,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className={`text-lg font-semibold ${cardColors.tasks.text}`}>Tasks</h2>
-                  <p className="text-3xl font-bold mt-1 text-gray-800">{stats.tasks.total}</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-800">{taskCount}</p>
                 </div>
                 {renderIcon('tasks')}
               </div>
@@ -251,7 +301,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
