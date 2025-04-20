@@ -15,7 +15,6 @@ module.exports = async (req, res, next) => {
   }
 
   const decodeToken = jwt.verify(token, secretKey)
-  console.log("--------decodeToken----------", decodeToken);
   if (!decodeToken) {
     return res.status(401).json({ message: "invalid token" });
   }

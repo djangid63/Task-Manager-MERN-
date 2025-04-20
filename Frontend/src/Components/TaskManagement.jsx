@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function getFormattedDate(date) {
-  return `Today, ${date.getHours()}:${date.getMinutes() < 10 ? '0' : ''}${date.getMinutes()} ${date.getHours() >= 12 ? 'PM' : 'AM'}`;
-}
 
 function App() {
   const [notes, setNotes] = useState([]);
@@ -13,6 +10,9 @@ function App() {
 
   const fetchData = async () => {
     try {
+
+
+
       const token = localStorage.getItem('token')
       console.log("token form storage--------", token);
       const config = {
@@ -21,6 +21,7 @@ function App() {
         }
       }
       const getDb = await axios.get('http://localhost:5000/task/getTasks', config);
+      console.log("Received task data:", getDb.data.taskData); // Add this line
       setNotes(getDb.data.taskData)
     } catch (error) {
       console.error('Error fetching notes:', error);

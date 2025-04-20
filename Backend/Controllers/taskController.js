@@ -2,7 +2,8 @@ const taskModel = require('../Models/taskModel')
 
 exports.getTasks = async (req, res) => {
   try {
-    const getAll = await taskModel.find().populate('userId', 'name email'); // Populating user info
+    // Only find tasks that are not disabled
+    const getAll = await taskModel.find({ isDisabled: { $ne: true } }).populate('userId');
     return res.status(200).json({ success: true, message: "Fetching all data successful", taskData: getAll })
   } catch (error) {
     return res.status(401).json({ success: false, message: "Failed to fetch data" })
@@ -16,8 +17,9 @@ exports.addTask = async (req, res) => {
     const taskData = new taskModel(req.body);
     const saveTask = await taskData.save();
 
-    // Fetch the saved task with populated user data
-    const populatedTask = await taskModel.findById(saveTask._id).populate('userId', 'name email');
+    const populatedTask = await taskModel.findById(saveTask._id)
+      .populate('userId')
+ 
 
     return res.status(201).json({
       success: true,
@@ -36,7 +38,7 @@ exports.updateTask = async (req, res) => {
     const updatedTask = req.body;
 
     const task = await taskModel.findByIdAndUpdate(id, updatedTask, { new: true })
-      .populate('userId', 'name email');
+      .populate('userId');
 
     if (!task) {
       return res.status(404).json({ success: false, message: "Task not found" });
@@ -57,16 +59,20 @@ exports.deleteTask = async (req, res) => {
       return res.status(400).json({ success: false, message: "Task ID is required" });
     }
 
-    const selectTask = await taskModel.findByIdAndDelete(id);
+    const selectTask = await taskModel.findByIdAndUpdate(
+      id,
+      { isDisabled: true },
+      { new: true }
+    );
 
     if (!selectTask) {
       return res.status(404).json({ success: false, message: "Task not found" });
     }
 
-    return res.status(200).json({ success: true, message: "Task deleted successfully" });
+    return res.status(200).json({ success: true, message: "Task disabled successfully" });
   } catch (error) {
-    console.log("--------task delete---------", error);
-    return res.status(500).json({ success: false, message: "Failed to delete task" });
+    console.log("--------task disable---------", error);
+    return res.status(500).json({ success: false, message: "Failed to disable task" });
   }
 }
 
@@ -75,9 +81,12 @@ exports.getTaskById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const task = await taskModel.findById(id).populate('userId', 'name email');
+    // Find task by ID only if it's not disabled
+    const task = await taskModel.findOne({ _id: id, isDisabled: false })
+      .populate('userId');
 
     if (!task) {
+      // Keep the message generic, as it could be not found or disabled
       return res.status(404).json({ success: false, message: "Task not found" });
     }
 
@@ -93,7 +102,9 @@ exports.getUserTasks = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const tasks = await taskModel.find({ userId }).populate('userId', 'name email');
+    // Find tasks for the user only if they are not disabled
+    const tasks = await taskModel.find({ userId, isDisabled: false })
+      .populate('userId');
 
     return res.status(200).json({
       success: true,

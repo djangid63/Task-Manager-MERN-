@@ -1,7 +1,7 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
-const notesSchema = new Schema({
+const taskSchema = new Schema({
   title: String,
   content: String,
   category: String,
@@ -9,7 +9,11 @@ const notesSchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'user'
+  },
+  isDisabled: {
+    type: Boolean,
+    default: false
   }
 })
 
-module.exports = mongoose.model("notes", notesSchema)
+module.exports = mongoose.model("tasks", taskSchema)
