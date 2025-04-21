@@ -18,8 +18,9 @@ function App() {
         }
       }
       const getDb = await axios.get('http://localhost:5000/task/getTask', config);
-      console.log("Received task data:", getDb.data.taskData); // Add this line
+      console.log("Received task data:", getDb.data.taskData);
       setNotes(getDb.data.taskData)
+
     } catch (error) {
       console.error('Error fetching notes:', error);
     }
@@ -186,17 +187,28 @@ function App() {
             {activeCategory === 'All' ? 'All Notes' : activeCategory}
             {/* <span className="ml-2 text-gray-400 text-lg">({filteredNotes.length || 0})</span> */}
           </h2>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search notes..."
-              value={searchStr}
-              onChange={(e) => { setSearchStr(e.target.value) }}
-              className="pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <svg className="w-4 h-4 absolute left-2.5 top-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+
+          <div className="flex space-x-4">
+            <div className=" ">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                onClick={() => window.location.href = '/dashboard'}
+              >
+                Dashboard
+              </button>
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Search notes..."
+                value={searchStr}
+                onChange={(e) => { setSearchStr(e.target.value) }}
+                className="pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <svg className="w-4 h-4 absolute left-2.5 top-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
           </div>
         </div>
 

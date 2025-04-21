@@ -31,6 +31,10 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
   const isExistingUser = await userModel.findOne({ email })
 
+  if (!isExistingUser.isDisabled == false) {
+    return res.status(404).json({ message: "Access revoked" })
+  }
+
   if (!isExistingUser) {
     return res.status(404).json({ message: "Please sign up before logging" })
   }
@@ -71,5 +75,36 @@ exports.getUsers = async (req, res) => {
   } catch (error) {
     console.log("--------get Users---------", error);
     return res.status(500).json({ success: false, message: "Failed to fetch Users" });
+  }
+}
+
+exports.toggleAccess = async (req, res) => {
+  try {
+    const { userId, isDisabled } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "User ID is required" });
+    }
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      { isDisabled },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const status = isDisabled ? "disabled" : "enabled";
+
+    return res.status(200).json({
+      success: true,
+      message: `User access ${status} successfully`,
+      user: updatedUser
+    });
+  } catch (error) {
+    console.log("--------toggle user access---------", error);
+    return res.status(500).json({ success: false, message: "Failed to toggle user access" });
   }
 }

@@ -78,7 +78,7 @@ exports.deleteTask = async (req, res) => {
 
 exports.count = async (req, res) => {
   try {
-    const totalTask = await taskModel.countDocuments();
+    const totalTask = await taskModel.countDocuments({ isDisabled: false });
     return res.status(200).json({ status: true, count: totalTask });
   } catch (error) {
     return res.status(500).json({ status: false, message: "Failed to count task", error: error.message });

@@ -22,6 +22,11 @@ const userSchema = new Schema({
   AdminId: {
     type: Schema.Types.ObjectId,
     ref: 'admin'
+  },
+  
+  isDisabled: {
+    type: Boolean,
+    default: false
   }
 
 }, { timestamps: true, versionKey: false })

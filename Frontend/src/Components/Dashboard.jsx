@@ -12,40 +12,7 @@ const Dashboard = () => {
   const [taskData, setTaskData] = useState([])
   const [taskCount, setTaskCount] = useState(0);
 
-  // Dummy static data
-  // const stats = {
-  //   admins: {
-  //     details: [
-  //       { id: 1, name: "John Doe", email: "john@example.com", role: "Super Admin" },
-  //       { id: 2, name: "Jane Smith", email: "jane@example.com", role: "System Admin" },
-  //       { id: 3, name: "Mike Johnson", email: "mike@example.com", role: "IT Admin" },
-  //       { id: 4, name: "Sarah Williams", email: "sarah@example.com", role: "Content Admin" },
-  //       { id: 5, name: "Alex Brown", email: "alex@example.com", role: "User Admin" }
-  //     ]
-  //   },
-  //   users: {
-  //     total: 28,
-  //     details: [
-  //       { id: 1, name: "Robert Wilson", email: "robert@example.com", department: "Marketing" },
-  //       { id: 2, name: "Emily Davis", email: "emily@example.com", department: "Sales" },
-  //       { id: 3, name: "David Thompson", email: "david@example.com", department: "Engineering" },
-  //       { id: 4, name: "Lisa Anderson", email: "lisa@example.com", department: "HR" },
-  //       { id: 5, name: "Michael Lee", email: "michael@example.com", department: "Finance" },
-  //       { id: 6, name: "Sophia Chen", email: "sophia@example.com", department: "Support" }
-  //     ]
-  //   },
-  //   tasks: {
-  //     total: 47,
-  //     details: [
-  //       { id: 1, title: "Update website content", status: "In Progress", assignee: "Emily Davis", dueDate: "2025-04-25" },
-  //       { id: 2, title: "Fix login page bug", status: "Completed", assignee: "David Thompson", dueDate: "2025-04-15" },
-  //       { id: 3, title: "Create monthly report", status: "Pending", assignee: "Michael Lee", dueDate: "2025-04-30" },
-  //       { id: 4, title: "Design new logo", status: "In Progress", assignee: "Robert Wilson", dueDate: "2025-05-05" },
-  //       { id: 5, title: "Setup user accounts", status: "Pending", assignee: "Alex Brown", dueDate: "2025-04-22" },
-  //       { id: 6, title: "Optimize database queries", status: "Pending", assignee: "David Thompson", dueDate: "2025-05-10" }
-  //     ]
-  //   }
-  // };
+
 
   // Admin count
   const fetchAdminCount = async () => {
@@ -107,6 +74,17 @@ const Dashboard = () => {
       console.log("-----User Data-----", error);
     }
   }
+
+  // Toggle user access
+  const toggleUserAccess = async (userId, isDisabled) => {
+    try {
+      const response = await axios.patch(`${BASE_URL}/user/toggleAccess`, { userId, isDisabled: !isDisabled });
+      console.log("User access toggled successfully", response.data);
+      getUsers();
+    } catch (error) {
+      console.log("Error toggling user access", error);
+    }
+  };
 
   // Show Task Data 
   const getTask = async () => {
@@ -208,6 +186,7 @@ const Dashboard = () => {
                   <th className="py-3 px-4 text-left">Name</th>
                   <th className="py-3 px-4 text-left">Email</th>
                   <th className="py-3 px-4 text-left">password</th>
+                  <th className="py-3 px-4 text-left">Access</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -218,6 +197,26 @@ const Dashboard = () => {
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
                         {user.password}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                        <input
+                          type="checkbox"
+                          id={`toggle-${user._id}`}
+                          checked={!user.isDisabled}
+                          onChange={() => toggleUserAccess(user._id, user.isDisabled)}
+                          className="sr-only peer"
+                        />
+                        <label
+                          htmlFor={`toggle-${user._id}`}
+                          className="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer peer-checked:bg-green-500"
+                        >
+                          <span className="absolute transform transition-transform duration-300 ease-in-out h-6 w-6 rounded-full bg-white shadow-md left-0 peer-checked:translate-x-4"></span>
+                        </label>
+                      </div>
+                      <span className={`text-xs ml-2 ${user.isDisabled ? 'text-red-500' : 'text-green-500'}`}>
+                        {user.isDisabled ? 'Disabled' : 'Enabled'}
                       </span>
                     </td>
                   </tr>
