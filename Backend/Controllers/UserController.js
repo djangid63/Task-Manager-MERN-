@@ -56,3 +56,20 @@ exports.count = async (req, res) => {
     return res.status(500).json({ status: false, message: "Failed to count user", error: error.message });
   }
 }
+
+exports.getUsers = async (req, res) => {
+  try {
+
+    // Find tasks for the user only if they are not disabled
+    const users = await userModel.find()
+
+    return res.status(200).json({
+      success: true,
+      message: "Users data fetched successfully",
+      userData: users
+    });
+  } catch (error) {
+    console.log("--------get Users---------", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch Users" });
+  }
+}

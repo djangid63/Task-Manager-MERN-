@@ -7,11 +7,12 @@ const taskController = require('../Controllers/taskController')
 
 router.post('/addTask', auth, taskController.addTask)
 router.delete('/deleteTask/:id', auth, taskController.deleteTask)
-router.get('/getTasks', auth, taskController.getTasks)
 router.patch('/updateTasks/:id', auth, taskController.updateTask)
 router.get('/myTasks', auth, taskController.getUserTasks)
-router.get('/count', taskController.count)
 
+// For Dashboard
+router.get('/count', taskController.count)
+router.get('/getTask', taskController.getTasks)
 
 
 module.exports = router

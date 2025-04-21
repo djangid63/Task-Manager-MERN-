@@ -2,8 +2,7 @@ const taskModel = require('../Models/taskModel')
 
 exports.getTasks = async (req, res) => {
   try {
-    // Only find tasks that are not disabled
-    const getAll = await taskModel.find({ isDisabled: { $ne: true } }).populate('userId');
+    const getAll = await taskModel.find({ isDisabled: false }).populate('userId');
     return res.status(200).json({ success: true, message: "Fetching all data successful", taskData: getAll })
   } catch (error) {
     return res.status(401).json({ success: false, message: "Failed to fetch data" })
@@ -77,13 +76,19 @@ exports.deleteTask = async (req, res) => {
 }
 
 
+exports.count = async (req, res) => {
+  try {
+    const totalTask = await taskModel.countDocuments();
+    return res.status(200).json({ status: true, count: totalTask });
+  } catch (error) {
+    return res.status(500).json({ status: false, message: "Failed to count task", error: error.message });
+  }
+}
+
 exports.getUserTasks = async (req, res) => {
   try {
-    const userId = req.user._id;
-
-    const tasks = await taskModel.find({ userId, isDisabled: false })
-      .populate('userId');
-
+    const tasks = await taskModel.find({ isDisabled: false })
+    console.log("tasks-------", tasks);
     return res.status(200).json({
       success: true,
       message: "User tasks fetched successfully",
@@ -92,14 +97,5 @@ exports.getUserTasks = async (req, res) => {
   } catch (error) {
     console.log("--------get user tasks---------", error);
     return res.status(500).json({ success: false, message: "Failed to fetch user tasks" });
-  }
-}
-
-exports.count = async (req, res) => {
-  try {
-    const totalTask = await taskModel.countDocuments();
-    return res.status(200).json({ status: true, count: totalTask });
-  } catch (error) {
-    return res.status(500).json({ status: false, message: "Failed to count task", error: error.message });
   }
 }

@@ -10,9 +10,6 @@ function App() {
 
   const fetchData = async () => {
     try {
-
-
-
       const token = localStorage.getItem('token')
       console.log("token form storage--------", token);
       const config = {
@@ -20,7 +17,7 @@ function App() {
           'Authorization': `Bearer ${token}`
         }
       }
-      const getDb = await axios.get('http://localhost:5000/task/getTasks', config);
+      const getDb = await axios.get('http://localhost:5000/task/getTask', config);
       console.log("Received task data:", getDb.data.taskData); // Add this line
       setNotes(getDb.data.taskData)
     } catch (error) {

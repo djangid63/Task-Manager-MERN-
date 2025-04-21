@@ -3,51 +3,55 @@ import { useEffect, useState } from 'react';
 import BASE_URL from './../api';
 
 const Dashboard = () => {
+  const [adminData, setAdminData] = useState([])
   const [adminCount, setAdminCount] = useState(0);
+
+  const [userData, setUserData] = useState([])
   const [userCount, setUserCount] = useState(0);
+
+  const [taskData, setTaskData] = useState([])
   const [taskCount, setTaskCount] = useState(0);
 
   // Dummy static data
-  const stats = {
-    admins: {
-      details: [
-        { id: 1, name: "John Doe", email: "john@example.com", role: "Super Admin" },
-        { id: 2, name: "Jane Smith", email: "jane@example.com", role: "System Admin" },
-        { id: 3, name: "Mike Johnson", email: "mike@example.com", role: "IT Admin" },
-        { id: 4, name: "Sarah Williams", email: "sarah@example.com", role: "Content Admin" },
-        { id: 5, name: "Alex Brown", email: "alex@example.com", role: "User Admin" }
-      ]
-    },
-    users: {
-      total: 28,
-      details: [
-        { id: 1, name: "Robert Wilson", email: "robert@example.com", department: "Marketing" },
-        { id: 2, name: "Emily Davis", email: "emily@example.com", department: "Sales" },
-        { id: 3, name: "David Thompson", email: "david@example.com", department: "Engineering" },
-        { id: 4, name: "Lisa Anderson", email: "lisa@example.com", department: "HR" },
-        { id: 5, name: "Michael Lee", email: "michael@example.com", department: "Finance" },
-        { id: 6, name: "Sophia Chen", email: "sophia@example.com", department: "Support" }
-      ]
-    },
-    tasks: {
-      total: 47,
-      details: [
-        { id: 1, title: "Update website content", status: "In Progress", assignee: "Emily Davis", dueDate: "2025-04-25" },
-        { id: 2, title: "Fix login page bug", status: "Completed", assignee: "David Thompson", dueDate: "2025-04-15" },
-        { id: 3, title: "Create monthly report", status: "Pending", assignee: "Michael Lee", dueDate: "2025-04-30" },
-        { id: 4, title: "Design new logo", status: "In Progress", assignee: "Robert Wilson", dueDate: "2025-05-05" },
-        { id: 5, title: "Setup user accounts", status: "Pending", assignee: "Alex Brown", dueDate: "2025-04-22" },
-        { id: 6, title: "Optimize database queries", status: "Pending", assignee: "David Thompson", dueDate: "2025-05-10" }
-      ]
-    }
-  };
+  // const stats = {
+  //   admins: {
+  //     details: [
+  //       { id: 1, name: "John Doe", email: "john@example.com", role: "Super Admin" },
+  //       { id: 2, name: "Jane Smith", email: "jane@example.com", role: "System Admin" },
+  //       { id: 3, name: "Mike Johnson", email: "mike@example.com", role: "IT Admin" },
+  //       { id: 4, name: "Sarah Williams", email: "sarah@example.com", role: "Content Admin" },
+  //       { id: 5, name: "Alex Brown", email: "alex@example.com", role: "User Admin" }
+  //     ]
+  //   },
+  //   users: {
+  //     total: 28,
+  //     details: [
+  //       { id: 1, name: "Robert Wilson", email: "robert@example.com", department: "Marketing" },
+  //       { id: 2, name: "Emily Davis", email: "emily@example.com", department: "Sales" },
+  //       { id: 3, name: "David Thompson", email: "david@example.com", department: "Engineering" },
+  //       { id: 4, name: "Lisa Anderson", email: "lisa@example.com", department: "HR" },
+  //       { id: 5, name: "Michael Lee", email: "michael@example.com", department: "Finance" },
+  //       { id: 6, name: "Sophia Chen", email: "sophia@example.com", department: "Support" }
+  //     ]
+  //   },
+  //   tasks: {
+  //     total: 47,
+  //     details: [
+  //       { id: 1, title: "Update website content", status: "In Progress", assignee: "Emily Davis", dueDate: "2025-04-25" },
+  //       { id: 2, title: "Fix login page bug", status: "Completed", assignee: "David Thompson", dueDate: "2025-04-15" },
+  //       { id: 3, title: "Create monthly report", status: "Pending", assignee: "Michael Lee", dueDate: "2025-04-30" },
+  //       { id: 4, title: "Design new logo", status: "In Progress", assignee: "Robert Wilson", dueDate: "2025-05-05" },
+  //       { id: 5, title: "Setup user accounts", status: "Pending", assignee: "Alex Brown", dueDate: "2025-04-22" },
+  //       { id: 6, title: "Optimize database queries", status: "Pending", assignee: "David Thompson", dueDate: "2025-05-10" }
+  //     ]
+  //   }
+  // };
 
   // Admin count
   const fetchAdminCount = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/admin/count`);
-      setAdminCount(response.data.count); // Update state
-      console.log("Admin count fetched:", response.data.count);
+      setAdminCount(response.data.count);
     } catch (error) {
       console.log("Count error log", error);
     }
@@ -57,8 +61,7 @@ const Dashboard = () => {
   const fetchUserCount = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/user/count`);
-      setUserCount(response.data.count); // Update state
-      console.log("user count fetched:", response.data.count);
+      setUserCount(response.data.count);
     } catch (error) {
       console.log("Count error log", error);
     }
@@ -70,7 +73,6 @@ const Dashboard = () => {
     try {
       const response = await axios.get(`${BASE_URL}/task/count`);
       setTaskCount(response.data.count);
-      console.log("user count fetched:", response.data.count);
     } catch (error) {
       console.log("Count error log", error);
     }
@@ -86,12 +88,34 @@ const Dashboard = () => {
   const getAdmins = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/admin/getAdmins`)
-      console.log(response);
-      if (response.data.status) {
-        console.log("Admins data successfully fetched", response.message);
-      }
+      setAdminData(response.data.AdminData)
+      console.log("Admins data successfully fetched", response.data.AdminData);
     } catch (error) {
       console.log("-----Admin Data-----", error);
+    }
+  }
+
+
+  // Show user Data
+  const getUsers = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/user/getUsers`)
+      setUserData(response.data.userData)
+      // console.log("Users data successfully fetched", userData.map((a) => { a }));
+      console.log("userData", userData);
+    } catch (error) {
+      console.log("-----User Data-----", error);
+    }
+  }
+
+  // Show Task Data 
+  const getTask = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/task/getTask`)
+      setTaskData(response.data.taskData)
+      console.log(taskData);
+    } catch (error) {
+      console.log("-----Task Data-----", error);
     }
   }
 
@@ -141,7 +165,6 @@ const Dashboard = () => {
   const renderDetails = () => {
     if (!selectedCard) return null;
 
-    const detailsData = stats[selectedCard].details;
 
     // Different table structures based on selected card type
     if (selectedCard === 'admins') {
@@ -154,17 +177,17 @@ const Dashboard = () => {
                 <tr>
                   <th className="py-3 px-4 text-left">Name</th>
                   <th className="py-3 px-4 text-left">Email</th>
-                  <th className="py-3 px-4 text-left">Role</th>
+                  <th className="py-3 px-4 text-left">Password</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {detailsData.map(admin => (
-                  <tr key={admin.id} className="hover:bg-gray-50 transition-colors duration-200">
+                {adminData.map(admin => (
+                  <tr key={admin._id} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="py-3 px-4 text-gray-800">{admin.name}</td>
                     <td className="py-3 px-4 text-gray-600">{admin.email}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                        {admin.role}
+                        {admin.password}
                       </span>
                     </td>
                   </tr>
@@ -184,17 +207,17 @@ const Dashboard = () => {
                 <tr>
                   <th className="py-3 px-4 text-left">Name</th>
                   <th className="py-3 px-4 text-left">Email</th>
-                  <th className="py-3 px-4 text-left">Department</th>
+                  <th className="py-3 px-4 text-left">password</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {detailsData.map(user => (
-                  <tr key={user.id} className="hover:bg-gray-50 transition-colors duration-200">
-                    <td className="py-3 px-4 text-gray-800">{user.name}</td>
+                {userData.map(user => (
+                  <tr key={user._id} className="hover:bg-gray-50 transition-colors duration-200">
+                    <td className="py-3 px-4 text-gray-800">{user.firstname + " " + user.lastname}</td>
                     <td className="py-3 px-4 text-gray-600">{user.email}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                        {user.department}
+                        {user.password}
                       </span>
                     </td>
                   </tr>
@@ -213,25 +236,25 @@ const Dashboard = () => {
               <thead className="bg-gray-100 text-gray-700">
                 <tr>
                   <th className="py-3 px-4 text-left">Title</th>
-                  <th className="py-3 px-4 text-left">Status</th>
-                  <th className="py-3 px-4 text-left">Assignee</th>
-                  <th className="py-3 px-4 text-left">Due Date</th>
+                  <th className="py-3 px-4 text-left">Content</th>
+                  <th className="py-3 px-4 text-left">Category</th>
+                  <th className="py-3 px-4 text-left">Assigned by</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {detailsData.map(task => (
-                  <tr key={task.id} className="hover:bg-gray-50 transition-colors duration-200">
+                {taskData.map(task => (
+                  <tr key={task._id} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="py-3 px-4 text-gray-800">{task.title}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'Completed' ? 'bg-green-100 text-green-800' :
                         task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
-                        {task.status}
+                        {task.content}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{task.assignee}</td>
-                    <td className="py-3 px-4 text-gray-600">{task.dueDate}</td>
+                    <td className="py-3 px-4 text-gray-600">{task.category}</td>
+                    <td className="py-3 px-4 text-gray-600">{task.userId.firstname + " " + task.userId.lastname}</td>
                   </tr>
                 ))}
               </tbody>
@@ -278,7 +301,7 @@ const Dashboard = () => {
 
             <div
               className={`${cardColors.users.bg} ${cardColors.users.hover} ${cardColors.users.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'users' ? 'ring-4 ring-green-300 scale-105' : ''}`}
-              onClick={() => handleCardClick('users')}
+              onClick={() => { handleCardClick('users'); getUsers() }}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -291,7 +314,7 @@ const Dashboard = () => {
 
             <div
               className={`${cardColors.tasks.bg} ${cardColors.tasks.hover} ${cardColors.tasks.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'tasks' ? 'ring-4 ring-purple-300 scale-105' : ''}`}
-              onClick={() => handleCardClick('tasks')}
+              onClick={() => { handleCardClick('tasks'); getTask() }}
             >
               <div className="flex items-center justify-between">
                 <div>
