@@ -185,7 +185,6 @@ function App() {
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800">
             {activeCategory === 'All' ? 'All Notes' : activeCategory}
-            {/* <span className="ml-2 text-gray-400 text-lg">({filteredNotes.length || 0})</span> */}
           </h2>
 
           <div className="flex space-x-4">

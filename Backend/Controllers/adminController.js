@@ -1,9 +1,11 @@
 const adminModel = require("../Models/adminModel")
 const bcrypt = require('bcrypt')
 
-exports.login = async (req, res) => {
+
+exports.Signup = async (req, res) => {
   try {
     const { name, email, password } = req.body
+
     const isMailExists = await adminModel.findOne({ email })
 
     if (isMailExists) {
@@ -13,14 +15,38 @@ exports.login = async (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(password, salt)
 
-    const adminData = new adminModel({ name, email, password: hashedPassword })
-    const saveData = await adminData.save()
-    return res.status(201).json({ status: true, message: "Admin log in successfully" })
+    const signData = new adminModel({ name, email, password: hashedPassword })
+    const saveData = await signData.save()
 
+    return res.status(201).json({ success: true, message: "Sign up successfully", data: saveData })
   } catch (error) {
-    return res.status(404).json({ status: false, message: `Admin log in failed, ${error}` })
+    console.log("User sign up failed :", error);
+    return res.status(400).json({ success: false, message: "Sign up failed" })
   }
 }
+
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+  const isExistingUser = await adminModel.findOne({ email })
+
+  if (!isExistingUser.isDisabled == false) {
+    return res.status(404).json({ message: "Access revoked" })
+  }
+
+  if (!isExistingUser) {
+    return res.status(404).json({ message: "Please sign up before logging" })
+  }
+
+  const dbPassword = isExistingUser.password;
+
+  const isMatch = bcrypt.compareSync(password, dbPassword)
+  if (!isMatch) {
+    return res.status(404).json({ success: false, message: "Password is incorrect" })
+  }
+
+  return res.status(201).json({ success: true, message: "Login successful" })
+}
+
 
 exports.count = async (req, res) => {
   try {
