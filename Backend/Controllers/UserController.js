@@ -4,6 +4,12 @@ const jwt = require("jsonwebtoken")
 const secretKey = "abcsdalfhdslf"
 const moment = require('moment')
 
+const { sendOtpEmail } = require('../Utils/emailService');
+
+// Your sender email for Nodemailer
+const SENDER_EMAIL = "jangiddummy6375@gmail.com";
+const mailkey = "hneo ulux pgln lgts"
+
 
 exports.SignUpUser = async (req, res) => {
   try {
@@ -21,6 +27,12 @@ exports.SignUpUser = async (req, res) => {
     const otp = Math.floor((Math.random() * 9000000) + 10000)
     const currTimer = moment()
     const otpTimer = currTimer.clone().add(10, "minutes");
+
+    // OTP Sended to the user
+    const emailSent = await sendOtpEmail(email, otp, firstname, SENDER_EMAIL, mailkey);
+    if (!emailSent) {
+      return res.status(500).json({ message: "Failed to send OTP email" });
+    }
 
     const signData = new userModel({ firstname, lastname, email, password: hashedPassword, otp, otpTimer })
     const saveData = await signData.save()
