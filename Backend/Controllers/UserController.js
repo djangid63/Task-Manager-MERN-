@@ -2,6 +2,7 @@ const userModel = require('../Models/UserModel')
 const bcrypt = require('bcrypt')
 const jwt = require("jsonwebtoken")
 const secretKey = "abcsdalfhdslf"
+const moment = require('moment')
 
 
 exports.SignUpUser = async (req, res) => {
@@ -17,8 +18,11 @@ exports.SignUpUser = async (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(password, salt)
 
+    const otp = Math.floor((Math.random() * 9000000) + 10000)
+    const currTimer = moment()
+    const otpTimer = currTimer.clone().add(10, "minutes");
 
-    const signData = new userModel({ firstname, lastname, email, password: hashedPassword })
+    const signData = new userModel({ firstname, lastname, email, password: hashedPassword, otp, otpTimer })
     const saveData = await signData.save()
     return res.status(201).json({ success: true, message: "Sign up successfully", data: saveData })
   } catch (error) {

@@ -4,9 +4,10 @@ import axios from 'axios';
 
 function App() {
   const [notes, setNotes] = useState([]);
-  const [searchStr, setSearchStr] = useState('')
+  const [searchStr, setSearchStr] = useState('');
+  const [users, setUsers] = useState([]);
 
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('token');
 
   const fetchData = async () => {
     try {
@@ -26,9 +27,20 @@ function App() {
     }
   }
 
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/user/getUsers');
+      console.log("Received users data:", response.data.userData);
+      setUsers(response.data.userData);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+    fetchUsers();
+  }, []);
 
 
   // To delete the data on the basis of _ID
@@ -91,7 +103,8 @@ function App() {
     title: '',
     content: '',
     category: 'Personal',
-    color: 'bg-emerald-200'
+    color: 'bg-emerald-200',
+    assignedTo: ''
   });
 
   // State for showing note form
@@ -110,7 +123,6 @@ function App() {
   const filteredNotes = activeCategory === 'All'
     ? notes
     : notes.filter(note => note.category === activeCategory);
-  console.log(filteredNotes);
 
   // Searching
   const searchedData = filteredNotes.filter((note) =>
@@ -119,14 +131,16 @@ function App() {
 
   // Handle adding new note
   const handleAddNote = async () => {
-    if (newNote.title.trim() !== '' && newNote.content.trim() !== '') {
+    if (newNote.title.trim() !== '' && newNote.content.trim() !== '' && newNote.assignedTo) {
       try {
         const config = {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         }
-        await axios.post('http://localhost:5000/task/addTask', newNote, config);
+        console.log("newNote being submitted:", newNote);
+        const response = await axios.post('http://localhost:5000/task/addTask', newNote, config);
+
       } catch (error) {
         console.error("Error while posting", error);
       }
@@ -137,9 +151,12 @@ function App() {
         title: '',
         content: '',
         category: 'Personal',
-        color: 'bg-emerald-200'
+        color: 'bg-emerald-200',
+        assignedTo: ''
       });
       setShowNoteForm(false);
+    } else {
+      alert("Please fill all required fields including assigning to a user");
     }
   };
 
@@ -242,6 +259,25 @@ function App() {
                   <option value="Personal">Personal</option>
                   <option value="Learning">Learning</option>
                 </select>
+
+                {/* User dropdown menu */}
+                <select
+                  value={newNote.assignedTo}
+                  onChange={(e) => setNewNote({ ...newNote, assignedTo: e.target.value })}
+                  className="border border-gray-200 rounded px-3 py-1 text-sm focus:outline-none focus:border-blue-500"
+                  required
+                >
+                  <option value="" disabled>Assign to user</option>
+                  {users
+                    .filter(user => !user.isDisabled) // Only show enabled users
+                    .map(user => (
+                      <option key={user._id} value={user._id}>
+                        {user.firstname} {user.lastname}
+                      </option>
+                    ))
+                  }
+                </select>
+
                 <div className="flex space-x-1">
                   {['bg-amber-200', 'bg-emerald-200', 'bg-violet-200', 'bg-rose-200', 'bg-sky-200'].map((color) => (
                     <button
@@ -272,32 +308,45 @@ function App() {
         )}
 
         {/* Notes Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 grid-rows-2 lg:grid-cols-3 gap-6">
           {searchedData.map(note => (
-            <div key={note._id} className={`${note.color} rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow`}>
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="font-medium text-lg text-gray-800">{note.title}</h3>
-                <div className="flex space-x-1">
-                  <button
-                    onClick={() => handleEditClick(note)}
-                    className="text-gray-400 hover:text-gray-600">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => { handleDelete(note._id); }}
-                    className="text-gray-400 hover:text-gray-600">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+            <div>
+              <div key={note._id} className={`${note.color} rounded-t-xl p-5 shadow-sm hover:shadow-md transition-shadow`}>
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="font-medium text-lg text-gray-800">{note.title}</h3>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => handleEditClick(note)}
+                      className="text-gray-400 hover:text-gray-600">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => { handleDelete(note._id); }}
+                      className="text-gray-400 hover:text-gray-600">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <p className="text-gray-600 mb-4 whitespace-pre-line">{note.content}</p>
+                <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+                  <span>{note.category}</span>
+                  <span>{note.date}</span>
                 </div>
               </div>
-              <p className="text-gray-600 mb-4 whitespace-pre-line">{note.content}</p>
-              <div className="flex justify-between items-center text-xs text-gray-500">
-                <span>{note.category}</span>
-                <span>{note.date}</span>
+
+              <div className={` flex flex-col ${note.color} rounded-b-xl p-4 shadow-sm hover:shadow-md transition-shadow gap-1 mt-[3px] text-xs text-gray-600 pt-2 py-2`}>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium">Assigned By:</span>
+                  <span>{note.userId?.firstname} {note.userId?.lastname}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium">Assigned To:</span>
+                  <span>{note.assignedTo?.firstname} {note.assignedTo?.lastname}</span>
+                </div>
               </div>
             </div>
           ))}
@@ -334,6 +383,25 @@ function App() {
                   <option value="Personal">Personal</option>
                   <option value="Learning">Learning</option>
                 </select>
+
+                {/* User dropdown menu for edit form */}
+                <select
+                  value={editingNote.assignedTo || ""}
+                  onChange={(e) => setEditingNote({ ...editingNote, assignedTo: e.target.value })}
+                  className="border border-gray-200 rounded px-3 py-1 text-sm focus:outline-none focus:border-blue-500"
+                  required
+                >
+                  <option value="" disabled>Assign to user</option>
+                  {users
+                    .filter(user => !user.isDisabled)
+                    .map(user => (
+                      <option key={user._id} value={user._id}>
+                        {user.firstname} {user.lastname}
+                      </option>
+                    ))
+                  }
+                </select>
+
                 <div className="flex space-x-1">
                   {['bg-amber-200', 'bg-emerald-200', 'bg-violet-200', 'bg-rose-200', 'bg-sky-200'].map((color) => (
                     <button

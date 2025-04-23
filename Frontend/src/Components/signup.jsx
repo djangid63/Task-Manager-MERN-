@@ -36,7 +36,7 @@ const Signup = () => {
 
     try {
       const response = await axios.post(`${BASE_URL}/user/signup`, formData)
-      console.log(response.data.message);
+      console.log(response.data);
       navigateToLogin()
     } catch (error) {
       console.log("Sign up failed", error);

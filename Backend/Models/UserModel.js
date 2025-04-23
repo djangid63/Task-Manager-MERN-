@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const { type } = require('os')
 
 const Schema = mongoose.Schema
 
@@ -23,7 +24,14 @@ const userSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'admin'
   },
-  
+
+  otp: {
+    type: Number
+  },
+  otpTimer: {
+    type: Number
+  },
+
   isDisabled: {
     type: Boolean,
     default: false

@@ -1,33 +1,59 @@
 const taskModel = require('../Models/taskModel')
+const userModel = require('../Models/UserModel')
 
 exports.getTasks = async (req, res) => {
   try {
-    const getAll = await taskModel.find({ isDisabled: false }).populate('userId');
+    const getAll = await taskModel.find({ isDisabled: false })
+      .populate({
+        path: 'userId',
+        model: 'user'
+      })
+      .populate({
+        path: 'assignedTo',
+        model: 'user'
+      })
     return res.status(200).json({ success: true, message: "Fetching all data successful", taskData: getAll })
   } catch (error) {
     return res.status(401).json({ success: false, message: "Failed to fetch data" })
   }
 }
 
+exports.getDisabledTasks = async (req, res) => {
+  try {
+    const disabledTasks = await taskModel.find({ isDisabled: true }).populate('userId');
+    return res.status(200).json({ success: true, message: "Fetching disabled tasks successful", taskData: disabledTasks })
+  } catch (error) {
+    return res.status(401).json({ success: false, message: "Failed to fetch disabled tasks" })
+  }
+}
+
 exports.addTask = async (req, res) => {
   try {
     req.body.userId = req.user._id
-    console.log(req.body);
+
     const taskData = new taskModel(req.body);
     const saveTask = await taskData.save();
 
+    // Explicitly populate the fields with complete user information
     const populatedTask = await taskModel.findById(saveTask._id)
-      .populate('userId')
-
+      .populate({
+        path: 'userId',
+        model: 'user'
+      })
+      .populate({
+        path: 'assignedTo',
+        model: 'user'
+      });
 
     return res.status(201).json({
       success: true,
       message: "Task added successfully",
       task: populatedTask
     });
+
   } catch (error) {
     console.log("-------task--------", error);
-    return res.status(401).json({ success: false, message: "Failed to add task" });
+    return res.status(401).json({ success: false, message: `Failed to add task, ${error}` });
   }
 }
 
@@ -37,7 +63,8 @@ exports.updateTask = async (req, res) => {
     const updatedTask = req.body;
 
     const task = await taskModel.findByIdAndUpdate(id, updatedTask, { new: true })
-      .populate('userId');
+      .populate('userId')
+      .populate('assignedTo');
 
     if (!task) {
       return res.status(404).json({ success: false, message: "Task not found" });
@@ -85,9 +112,20 @@ exports.count = async (req, res) => {
   }
 }
 
+exports.disableCount = async (req, res) => {
+  try {
+    const totalTask = await taskModel.countDocuments({ isDisabled: true });
+    return res.status(200).json({ status: true, count: totalTask });
+  } catch (error) {
+    return res.status(500).json({ status: false, message: "Failed to count task", error: error.message });
+  }
+}
+
 exports.getUserTasks = async (req, res) => {
   try {
     const tasks = await taskModel.find({ isDisabled: false })
+      .populate('userId')
+      .populate('assignedTo');
     console.log("tasks-------", tasks);
     return res.status(200).json({
       success: true,

@@ -12,7 +12,11 @@ const Dashboard = () => {
   const [taskData, setTaskData] = useState([])
   const [taskCount, setTaskCount] = useState(0);
 
+  const [disabledTaskData, setDisabledTaskData] = useState([])
+  const [disabledTaskCount, setDisabledTaskCount] = useState(0);
 
+  // State to track which card is selected
+  const [selectedCard, setSelectedCard] = useState('admins');
 
   // Admin count
   const fetchAdminCount = async () => {
@@ -34,7 +38,6 @@ const Dashboard = () => {
     }
   };
 
-
   // Task count
   const fetchTaskCount = async () => {
     try {
@@ -44,11 +47,22 @@ const Dashboard = () => {
       console.log("Count error log", error);
     }
   };
+  // Disabled Task Count
+  const fetchDisableTaskCount = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/task/disableCount`);
+      setDisabledTaskCount(response.data.count);
+    } catch (error) {
+      console.log("Count error log", error);
+    }
+  };
 
   useEffect(() => {
     fetchAdminCount();
     fetchUserCount();
     fetchTaskCount();
+    fetchDisableTaskCount()
+    getAdmins()
   }, []);
 
   // Show admin Data
@@ -61,7 +75,6 @@ const Dashboard = () => {
       console.log("-----Admin Data-----", error);
     }
   }
-
 
   // Show user Data
   const getUsers = async () => {
@@ -97,8 +110,15 @@ const Dashboard = () => {
     }
   }
 
-  // State to track which card is selected
-  const [selectedCard, setSelectedCard] = useState(null);
+
+  const getDisabledTask = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/task/getDisabledTasks`)
+      setDisabledTaskData(response.data.taskData)
+    } catch (error) {
+      console.log("-----Task Data-----", error);
+    }
+  }
 
   // Function to handle card click
   const handleCardClick = (cardType) => {
@@ -139,12 +159,9 @@ const Dashboard = () => {
     }
   };
 
-  // Render detail tables based on selected card
   const renderDetails = () => {
     if (!selectedCard) return null;
 
-
-    // Different table structures based on selected card type
     if (selectedCard === 'admins') {
       return (
         <div className="mt-8 animate-fadeIn">
@@ -261,12 +278,49 @@ const Dashboard = () => {
           </div>
         </div>
       );
+    } else if (selectedCard === 'disabledTasks') {
+      return (
+        <div className="mt-8 animate-fadeIn">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">Task Details</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
+              <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                  <th className="py-3 px-4 text-left">Title</th>
+                  <th className="py-3 px-4 text-left">Content</th>
+                  <th className="py-3 px-4 text-left">Category</th>
+                  <th className="py-3 px-4 text-left">Assigned by</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {disabledTaskData.map(task => (
+                  <tr key={task._id} className="hover:bg-gray-50 transition-colors duration-200">
+                    <td className="py-3 px-4 text-gray-800">{task.title}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                        task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                        {task.content}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">{task.category}</td>
+                    <td className="py-3 px-4 text-gray-600">{task.userId.firstname + " " + task.userId.lastname}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
     }
+
+    return null;
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 p-4">
-      <div className="w-full max-w-7xl flex flex-col md:flex-row bg-white rounded-2xl shadow-xl overflow-hidden" style={{ minHeight: '90vh' }}>
+    <div className="w-[100vw] h-[100vh] flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 ">
+      <div className="w-full max-w-full h-full flex flex-col md:flex-row bg-white  shadow-xl overflow-hidden" style={{ minHeight: '90vh' }}>
         <div className="hidden md:flex md:w-1/4 bg-gradient-to-br from-blue-500 to-indigo-600 p-8 md:p-12 flex-col justify-center items-center text-white relative">
           <div className="absolute inset-0 bg-black opacity-10 z-0"></div>
           <div className="relative z-10 text-center">
@@ -284,7 +338,7 @@ const Dashboard = () => {
             <p className="text-gray-600 text-md">Here's your task management overview.</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
             <div
               className={`${cardColors.admins.bg} ${cardColors.admins.hover} ${cardColors.admins.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'admins' ? 'ring-4 ring-blue-300 scale-105' : ''}`}
               onClick={() => { handleCardClick('admins'); getAdmins() }}
@@ -323,6 +377,18 @@ const Dashboard = () => {
                 {renderIcon('tasks')}
               </div>
             </div>
+            <div
+              className={`${cardColors.tasks.bg} ${cardColors.tasks.hover} ${cardColors.tasks.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'tasks' ? 'ring-4 ring-purple-300 scale-105' : ''}`}
+              onClick={() => { handleCardClick('disabledTasks'); getDisabledTask() }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-lg font-semibold ${cardColors.tasks.text}`}>Inactive Task</h2>
+                  <p className="text-3xl font-bold mt-1 text-gray-800">{disabledTaskCount}</p>
+                </div>
+                {renderIcon('tasks')}
+              </div>
+            </div>
           </div>
 
           <div className="flex-grow">
@@ -332,14 +398,14 @@ const Dashboard = () => {
       </div>
 
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.6s ease-in-out;
-        }
-      `}</style>
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.6s ease-in-out;
+      }
+    `}</style>
     </div>
   );
 };

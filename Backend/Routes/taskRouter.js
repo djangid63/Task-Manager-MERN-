@@ -12,7 +12,9 @@ router.get('/myTasks', auth, taskController.getUserTasks)
 
 // For Dashboard
 router.get('/count', taskController.count)
+router.get('/disableCount', taskController.disableCount)
 router.get('/getTask', taskController.getTasks)
+router.get('/getDisabledTasks', taskController.getDisabledTasks)
 
 
 module.exports = router
