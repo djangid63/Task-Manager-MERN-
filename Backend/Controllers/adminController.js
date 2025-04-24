@@ -27,7 +27,7 @@ exports.Signup = async (req, res) => {
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  const isExistingUser = await adminModel.findOne({ email })
+  const isExistingUser = await adminModel.findOne({ email }) 
 
   if (!isExistingUser.isDisabled == false) {
     return res.status(404).json({ message: "Access revoked" })

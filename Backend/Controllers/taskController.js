@@ -34,7 +34,6 @@ exports.addTask = async (req, res) => {
     const taskData = new taskModel(req.body);
     const saveTask = await taskData.save();
 
-    // Explicitly populate the fields with complete user information
     const populatedTask = await taskModel.findById(saveTask._id)
       .populate({
         path: 'userId',
