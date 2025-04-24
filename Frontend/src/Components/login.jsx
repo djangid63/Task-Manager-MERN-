@@ -53,18 +53,26 @@ const Login = () => {
           navigateTo('/dashboard');
         }
       } else if (loginType === 'user') {
-        if (response.data.success && response.data.requireOtp) {
-          // If OTP verification is required
-          setShowOtpVerification(true);
-          setUserEmail(formData.email);
-          alert("Please enter the OTP sent to your email");
-        } else if (response.data.success) {
-          // If OTP verification is not required (already verified)
+        // if (response.data.success && response.data.requireOtp) {
+        //   setShowOtpVerification(true);
+        //   setUserEmail(formData.email);
+        //   alert("Please enter the OTP sent to your email");
+        // } else if (response.data.success) {
+        //   alert(response.data.message);
+        //   localStorage.setItem('token', response.data.token);
+        //   localStorage.setItem('userType', 'user');
+        //   navigateTo('/taskMangement');
+        // }
+
+
+        if (response.data.success) {
           alert(response.data.message);
           localStorage.setItem('token', response.data.token);
           localStorage.setItem('userType', 'user');
           navigateTo('/taskMangement');
         }
+
+
       }
     } catch (error) {
       alert(error.response?.data?.message || error.message || "Login failed");

@@ -454,19 +454,17 @@ function App() {
                   <span>{new Date(note.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
+              {activeView !== 'All' && activeView !== 'AssignedToMe' && (
+                <div className={`flex flex-col ${getNoteColor(note)} bg-amber-200 rounded-b-xl p-4 shadow-sm hover:shadow-md transition-shadow gap-1 mt-[3px] text-xs text-gray-600 pt-2 py-2`}>
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium">Assigned By:</span>
+                    <span>{note.userId?.firstname} {note.userId?.lastname}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium">Assigned To:</span>
+                    <span>{note.assignedTo?.firstname} {note.assignedTo?.lastname}</span>
+                  </div>
 
-              <div className={`flex flex-col ${getNoteColor(note)} bg-amber-200 rounded-b-xl p-4 shadow-sm hover:shadow-md transition-shadow gap-1 mt-[3px] text-xs text-gray-600 pt-2 py-2`}>
-                <div className="flex items-center gap-1">
-                  <span className="font-medium">Assigned By:</span>
-                  <span>{note.userId?.firstname} {note.userId?.lastname}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="font-medium">Assigned To:</span>
-                  <span>{note.assignedTo?.firstname} {note.assignedTo?.lastname}</span>
-                </div>
-
-                {/* Simplified status display - only for Task Given to me and Task Given by me views */}
-                {activeView !== 'All' && (
                   <div className="flex items-center justify-between mt-2">
                     <label className="inline-flex items-center cursor-pointer">
                       <input
@@ -480,8 +478,27 @@ function App() {
                       </span>
                     </label>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+              {
+                activeView === 'AssignedToMe' && (
+                  <div className={`flex flex-col ${getNoteColor(note)} bg-amber-200 rounded-b-xl p-4 shadow-sm hover:shadow-md transition-shadow gap-1 mt-[3px] text-xs text-gray-600 pt-2 py-2`}>
+                    <div className="flex items-center justify-between mt-2">
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={note.status === 'completed'}
+                          onChange={() => toggleTaskStatus(note._id, note.status)}
+                          className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                        />
+                        <span className="ml-2">
+                          {note.status === 'completed' ? 'Completed' : 'Pending'}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )
+              }
             </div>
           ))}
 

@@ -29,10 +29,10 @@ exports.SignUpUser = async (req, res) => {
     const otpTimer = currTimer.clone().add(10, "minutes");
 
     // OTP Send
-    const emailSent = await sendOtpEmail(email, otp, firstname, SENDER_EMAIL, mailkey);
-    if (!emailSent) {
-      return res.status(500).json({ message: "Failed to send OTP email" });
-    }
+    // const emailSent = await sendOtpEmail(email, otp, firstname, SENDER_EMAIL, mailkey);
+    // if (!emailSent) {
+    //   return res.status(500).json({ message: "Failed to send OTP email" });
+    // }
 
     const signData = new userModel({ firstname, lastname, email, password: hashedPassword, otp, otpTimer })
     const saveData = await signData.save()
@@ -64,20 +64,22 @@ exports.login = async (req, res) => {
     }
 
     // New OOTP
-    const otp = Math.floor((Math.random() * 900000) + 100000);
-    const currTimer = moment();
-    const otpTimer = currTimer.clone().add(10, "minutes");
+    // const otp = Math.floor((Math.random() * 900000) + 100000);
+    // const currTimer = moment();
+    // const otpTimer = currTimer.clone().add(10, "minutes");
 
-    user.otp = otp;
-    user.otpTimer = otpTimer;
-    await user.save();
+    // user.otp = otp;
+    // user.otpTimer = otpTimer;
+    // await user.save();
 
-    await sendOtpEmail(email, otp, user.firstname, SENDER_EMAIL, mailkey);
+    // await sendOtpEmail(email, otp, user.firstname, SENDER_EMAIL, mailkey);
+    const token = jwt.sign({ email: user.email }, secretKey);
 
     return res.status(200).json({
       success: true,
       message: "Please verify your OTP sent to your email",
-      requireOtp: true
+      // requireOtp: true
+      token
     });
   } catch (error) {
     console.log("Login error:", error);
