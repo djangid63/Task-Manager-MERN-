@@ -18,6 +18,19 @@ const Dashboard = () => {
   // State to track which card is selected
   const [selectedCard, setSelectedCard] = useState('admins');
 
+  // New state variables for task CRUD operations
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [modalType, setModalType] = useState('create'); // 'create' or 'edit'
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [taskForm, setTaskForm] = useState({
+    title: '',
+    content: '',
+    category: '',
+    status: 'Pending'
+  });
+  const [userOptions, setUserOptions] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('');
+
   // Admin count
   const fetchAdminCount = async () => {
     try {
@@ -57,12 +70,23 @@ const Dashboard = () => {
     }
   };
 
+  // Function to fetch users for task assignment dropdown
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/user/getUsers`);
+      setUserOptions(response.data.userData);
+    } catch (error) {
+      console.log("Error fetching users for task assignment", error);
+    }
+  };
+
   useEffect(() => {
     fetchAdminCount();
     fetchUserCount();
     fetchTaskCount();
-    fetchDisableTaskCount()
-    getAdmins()
+    fetchDisableTaskCount();
+    getAdmins();
+    fetchUsers(); // Load users for task assignment
   }, []);
 
   // Show admin Data
@@ -96,6 +120,17 @@ const Dashboard = () => {
       getUsers();
     } catch (error) {
       console.log("Error toggling user access", error);
+    }
+  };
+
+  // Toggle admin access
+  const toggleAdminAccess = async (adminId, isDisabled) => {
+    try {
+      const response = await axios.patch(`${BASE_URL}/admin/toggleAccess`, { adminId, isDisabled: !isDisabled });
+      console.log("Admin access toggled successfully", response.data);
+      getAdmins();
+    } catch (error) {
+      console.log("Error toggling admin access", error);
     }
   };
 
@@ -173,6 +208,7 @@ const Dashboard = () => {
                   <th className="py-3 px-4 text-left">Name</th>
                   <th className="py-3 px-4 text-left">Email</th>
                   <th className="py-3 px-4 text-left">Password</th>
+                  <th className="py-3 px-4 text-left">Access</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -183,6 +219,26 @@ const Dashboard = () => {
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
                         {admin.password}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                        <input
+                          type="checkbox"
+                          id={`toggle-admin-${admin._id}`}
+                          checked={!admin.isDisabled}
+                          onChange={() => toggleAdminAccess(admin._id, admin.isDisabled)}
+                          className="sr-only peer"
+                        />
+                        <label
+                          htmlFor={`toggle-admin-${admin._id}`}
+                          className="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer peer-checked:bg-green-500"
+                        >
+                          <span className="absolute transform transition-transform duration-300 ease-in-out h-6 w-6 rounded-full bg-white shadow-md left-0 peer-checked:translate-x-4"></span>
+                        </label>
+                      </div>
+                      <span className={`text-xs ml-2 ${admin.isDisabled ? 'text-red-500' : 'text-green-500'}`}>
+                        {admin.isDisabled ? 'Disabled' : 'Enabled'}
                       </span>
                     </td>
                   </tr>
@@ -253,8 +309,8 @@ const Dashboard = () => {
                 <tr>
                   <th className="py-3 px-4 text-left">Title</th>
                   <th className="py-3 px-4 text-left">Content</th>
-                  <th className="py-3 px-4 text-left">Category</th>
                   <th className="py-3 px-4 text-left">Assigned by</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -269,8 +325,11 @@ const Dashboard = () => {
                         {task.content}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{task.category}</td>
                     <td className="py-3 px-4 text-gray-600">{task.userId.firstname + " " + task.userId.lastname}</td>
+                    <td className="py-3 px-4">
+                      <button onClick={() => openEditTaskModal(task)} className="text-blue-500 hover:text-blue-700">Edit</button>
+                      <button onClick={() => deleteTask(task._id)} className="text-red-500 hover:text-red-700 ml-2">Delete</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -281,7 +340,7 @@ const Dashboard = () => {
     } else if (selectedCard === 'disabledTasks') {
       return (
         <div className="mt-8 animate-fadeIn">
-          <h3 className="text-xl font-semibold mb-4 text-gray-800">Task Details</h3>
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">Inactive Task Details</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
               <thead className="bg-gray-100 text-gray-700">
@@ -289,7 +348,7 @@ const Dashboard = () => {
                   <th className="py-3 px-4 text-left">Title</th>
                   <th className="py-3 px-4 text-left">Content</th>
                   <th className="py-3 px-4 text-left">Category</th>
-                  <th className="py-3 px-4 text-left">Assigned by</th>
+                  <th className="py-3 px-4 text-left">Assigned To</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -305,7 +364,7 @@ const Dashboard = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-gray-600">{task.category}</td>
-                    <td className="py-3 px-4 text-gray-600">{task.userId.firstname + " " + task.userId.lastname}</td>
+                    <td className="py-3 px-4 text-gray-600">{task.userId ? `${task.userId.firstname} ${task.userId.lastname}` : 'N/A'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -316,6 +375,233 @@ const Dashboard = () => {
     }
 
     return null;
+  };
+
+  // Handle task form change
+  const handleTaskFormChange = (e) => {
+    const { name, value } = e.target;
+    setTaskForm({
+      ...taskForm,
+      [name]: value
+    });
+  };
+
+  // Open modal for creating a new task
+  const openCreateTaskModal = () => {
+    setModalType('create');
+    setTaskForm({
+      title: '',
+      content: '',
+      category: '',
+      status: 'Pending'
+    });
+    setSelectedUser('');
+    setShowTaskModal(true);
+  };
+
+  // Open modal for editing an existing task
+  const openEditTaskModal = (task) => {
+    setModalType('edit');
+    setSelectedTask(task);
+    setTaskForm({
+      title: task.title,
+      content: task.content,
+      category: task.category || '',
+      status: task.status
+    });
+    setSelectedUser(task.userId._id);
+    setShowTaskModal(true);
+  };
+
+  // Create a new task
+  const createTask = async () => {
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
+
+      const taskData = {
+        ...taskForm,
+        userId: selectedUser
+      };
+
+      // Include auth token in headers
+      await axios.post(`${BASE_URL}/task/addTask`, taskData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setShowTaskModal(false);
+      fetchTaskCount();
+      getTask();
+    } catch (error) {
+      console.error("Error creating task:", error);
+      alert("Failed to create task. Please try again.");
+    }
+  };
+
+  // Update an existing task
+  const updateTask = async () => {
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
+
+      const taskData = {
+        ...taskForm,
+        userId: selectedUser
+      };
+
+      // Include auth token in headers
+      await axios.patch(`${BASE_URL}/task/updateTasks/${selectedTask._id}`, taskData, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setShowTaskModal(false);
+      fetchTaskCount();
+      getTask();
+    } catch (error) {
+      console.error("Error updating task:", error);
+      alert("Failed to update task. Please try again.");
+    }
+  };
+
+  const deleteTask = async (taskId) => {
+    if (confirm("Are you sure you want to delete this task?")) {
+      try {
+        const token = localStorage.getItem('token');
+
+        await axios.delete(`${BASE_URL}/task/deleteTask/${taskId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        fetchTaskCount();
+        fetchDisableTaskCount();
+        getTask();
+        getDisabledTask();
+
+      } catch (error) {
+        console.error("Error deleting task:", error);
+        alert("Failed to delete task. Please try again.");
+      }
+    }
+  }
+
+  const toggleTaskStatus = async (taskId, isDisabled) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      await axios.patch(`${BASE_URL}/task/toggleStatus/${taskId}`,
+        { isDisabled: !isDisabled },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      fetchTaskCount();
+      fetchDisableTaskCount();
+      getTask();
+      getDisabledTask();
+    } catch (error) {
+      console.error("Error toggling task status:", error);
+      alert("Failed to change task status. Please try again.");
+    }
+  };
+
+  // Handle form submission
+  const handleTaskFormSubmit = (e) => {
+    e.preventDefault();
+    if (modalType === 'create') {
+      createTask();
+    } else {
+      updateTask();
+    }
+  };
+
+  const renderTaskModal = () => {
+    return (
+      <div className={`fixed inset-0 flex items-center justify-center z-50 ${showTaskModal ? '' : 'hidden'}`}>
+        <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true"></div>
+        <div className="bg-white rounded-lg overflow-hidden shadow-lg z-10 w-11/12 md:w-1/3">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold mb-4">{modalType === 'create' ? 'Create Task' : 'Edit Task'}</h2>
+            <form onSubmit={handleTaskFormSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="title">Title</label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={taskForm.title}
+                  onChange={handleTaskFormChange}
+                  required
+                  className="block w-full border border-gray-300 rounded-md p-2"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="content">Content</label>
+                <textarea
+                  id="content"
+                  name="content"
+                  value={taskForm.content}
+                  onChange={handleTaskFormChange}
+                  required
+                  className="block w-full border border-gray-300 rounded-md p-2"
+                ></textarea>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="status">Status</label>
+                <select
+                  id="status"
+                  name="status"
+                  value={taskForm.status}
+                  onChange={handleTaskFormChange}
+                  className="block w-full border border-gray-300 rounded-md p-2"
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="userId">Assign to</label>
+                <select
+                  id="userId"
+                  name="userId"
+                  value={selectedUser}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  className="block w-full border border-gray-300 rounded-md p-2"
+                >
+                  <option value="">Select a user</option>
+                  {userOptions.map(user => (
+                    <option key={user._id} value={user._id}>{user.firstname} {user.lastname}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowTaskModal(false)}
+                  className="mr-2 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  {modalType === 'create' ? 'Create' : 'Save'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -378,24 +664,43 @@ const Dashboard = () => {
               </div>
             </div>
             <div
-              className={`${cardColors.tasks.bg} ${cardColors.tasks.hover} ${cardColors.tasks.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'tasks' ? 'ring-4 ring-purple-300 scale-105' : ''}`}
+              className={`bg-red-100 hover:bg-red-200 border-red-300 border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'disabledTasks' ? 'ring-4 ring-red-300 scale-105' : ''}`}
               onClick={() => { handleCardClick('disabledTasks'); getDisabledTask() }}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className={`text-lg font-semibold ${cardColors.tasks.text}`}>Inactive Task</h2>
+                  <h2 className={`text-lg font-semibold text-red-800`}>Inactive Task</h2>
                   <p className="text-3xl font-bold mt-1 text-gray-800">{disabledTaskCount}</p>
                 </div>
-                {renderIcon('tasks')}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                  <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                </svg>
               </div>
             </div>
           </div>
+
+          {selectedCard === 'tasks' && (
+            <div className="mb-6 flex justify-end">
+              <button
+                onClick={openCreateTaskModal}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                Create New Task
+              </button>
+            </div>
+          )}
 
           <div className="flex-grow">
             {renderDetails()}
           </div>
         </div>
       </div>
+
+      {renderTaskModal()}
 
       <style>{`
       @keyframes fadeIn {

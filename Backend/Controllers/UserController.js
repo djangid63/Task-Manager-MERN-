@@ -24,11 +24,11 @@ exports.SignUpUser = async (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(password, salt)
 
-    const otp = Math.floor((Math.random() * 9000000) + 10000)
+    const otp = Math.floor((Math.random() * 900000) + 100000);
     const currTimer = moment()
     const otpTimer = currTimer.clone().add(10, "minutes");
 
-    // OTP Sended to the user
+    // OTP Send
     const emailSent = await sendOtpEmail(email, otp, firstname, SENDER_EMAIL, mailkey);
     if (!emailSent) {
       return res.status(500).json({ message: "Failed to send OTP email" });
@@ -45,27 +45,123 @@ exports.SignUpUser = async (req, res) => {
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  const isExistingUser = await userModel.findOne({ email })
+  try {
+    const user = await userModel.findOne({ email });
 
-  if (!isExistingUser.isDisabled == false) {
-    return res.status(404).json({ message: "Access revoked" })
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Please sign up before logging in" });
+    }
+
+    if (user.isDisabled) {
+      return res.status(403).json({ success: false, message: "Access revoked" });
+    }
+
+    const dbPassword = user.password;
+    const isMatch = bcrypt.compareSync(password, dbPassword)
+
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Password is incorrect" });
+    }
+
+    // New OOTP
+    const otp = Math.floor((Math.random() * 900000) + 100000);
+    const currTimer = moment();
+    const otpTimer = currTimer.clone().add(10, "minutes");
+
+    user.otp = otp;
+    user.otpTimer = otpTimer;
+    await user.save();
+
+    await sendOtpEmail(email, otp, user.firstname, SENDER_EMAIL, mailkey);
+
+    return res.status(200).json({
+      success: true,
+      message: "Please verify your OTP sent to your email",
+      requireOtp: true
+    });
+  } catch (error) {
+    console.log("Login error:", error);
+    return res.status(500).json({ success: false, message: "Login failed" });
   }
+}
 
-  if (!isExistingUser) {
-    return res.status(404).json({ message: "Please sign up before logging" })
+exports.verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: "Email and OTP are required" });
+    }
+
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const currentTime = moment();
+    const otpExpiry = moment(user.otpTimer);
+
+    if (currentTime.isAfter(otpExpiry)) {
+      return res.status(401).json({ success: false, message: "OTP has expired" });
+    }
+
+    if (Number(otp) !== user.otp) {
+      return res.status(401).json({ success: false, message: "Invalid OTP" });
+    }
+
+    const token = jwt.sign({ email: user.email }, secretKey);
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verification successful",
+      token
+    });
+
+  } catch (error) {
+    console.log("OTP verification error:", error);
+    return res.status(500).json({ success: false, message: "OTP verification failed" });
   }
+}
 
-  const dbPassword = isExistingUser.password;
+exports.resendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
 
-  const isMatch = bcrypt.compareSync(password, dbPassword)
-  if (!isMatch) {
-    return res.status(404).json({ success: false, message: "Password is incorrect" })
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // NEW OPT
+    const otp = Math.floor((Math.random() * 900000) + 100000);
+    const currTimer = moment();
+    const otpTimer = currTimer.clone().add(10, "minutes");
+
+    user.otp = otp;
+    user.otpTimer = otpTimer;
+    await user.save();
+
+    const emailSent = await sendOtpEmail(email, otp, user.firstname, SENDER_EMAIL, mailkey);
+
+    if (!emailSent) {
+      return res.status(500).json({ success: false, message: "Failed to send OTP email" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP resent successfully"
+    });
+
+  } catch (error) {
+    console.log("Resend OTP error:", error);
+    return res.status(500).json({ success: false, message: "Failed to resend OTP" });
   }
-
-  const token = jwt.sign({ email }, secretKey)
-  console.log(token);
-
-  return res.status(201).json({ success: true, message: "Login successful", token })
 }
 
 exports.count = async (req, res) => {

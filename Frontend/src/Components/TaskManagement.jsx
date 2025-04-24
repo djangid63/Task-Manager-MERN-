@@ -169,6 +169,18 @@ function App() {
     filteredNotes = assignedBy;
   }
 
+  // Function to get color for a note
+  const getNoteColor = (note) => {
+    if (note.color) return note.color;
+
+    // Default colors based on status if color is missing
+    if (note.status === 'completed') return 'bg-green-100';
+    if (note.status === 'pending') return 'bg-yellow-100';
+
+    // Fallback default color
+    return 'bg-emerald-200';
+  };
+
   // Searching
   const searchedData = filteredNotes.filter((note) =>
     searchStr !== "" ? note.title.toLowerCase().includes(searchStr.toLowerCase()) : filteredNotes
@@ -319,27 +331,26 @@ function App() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* /* Main Content  */}
       <div className="flex-1 p-8">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800">
-            {activeView === 'AssignedToMe'
-              ? 'Tasks Assigned To Me'
-              : activeView === 'AssignedByMe'
-                ? 'Tasks Assigned By Me'
-                : activeCategory === 'All'
-                  ? 'All Notes'
-                  : activeCategory}
+            {
+              {
+                'AssignedToMe': 'Tasks Assigned To Me',
+                'AssignedByMe': 'Tasks Assigned By Me',
+                'All': 'All Notes'
+              }[activeView] || activeCategory
+            }
           </h2>
 
           <div className="flex space-x-4">
-
             <div>
               <input
                 type="text"
                 placeholder="Search notes..."
                 value={searchStr}
-                onChange={(e) => { setSearchStr(e.target.value) }}
+                onChange={(e) => setSearchStr(e.target.value)}
                 className="pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <svg className="w-4 h-4 absolute left-2.5 top-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -415,12 +426,11 @@ function App() {
         <div className="grid grid-cols-1 md:grid-cols-2 grid-rows-2 lg:grid-cols-3 gap-6">
           {searchedData.map(note => (
             <div key={note._id} >
-              <div className={`${note.color} rounded-t-xl p-5 shadow-sm hover:shadow-md transition-shadow`}>
+              <div className={`${getNoteColor(note)} bg-amber-200 rounded-t-xl p-5 shadow-sm hover:shadow-md transition-shadow`}>
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="font-medium text-lg text-gray-800">{note.title}</h3>
 
-                  {/* Only show edit/delete buttons if NOT in the All view */}
-                  {activeView !== 'All' && (
+                  {activeView !== 'All' && activeView !== 'AssignedToMe' && (
                     <div className="flex space-x-1">
                       <button
                         onClick={() => handleEditClick(note)}
@@ -445,7 +455,7 @@ function App() {
                 </div>
               </div>
 
-              <div className={` flex flex-col ${note.color} rounded-b-xl p-4 shadow-sm hover:shadow-md transition-shadow gap-1 mt-[3px] text-xs text-gray-600 pt-2 py-2`}>
+              <div className={`flex flex-col ${getNoteColor(note)} bg-amber-200 rounded-b-xl p-4 shadow-sm hover:shadow-md transition-shadow gap-1 mt-[3px] text-xs text-gray-600 pt-2 py-2`}>
                 <div className="flex items-center gap-1">
                   <span className="font-medium">Assigned By:</span>
                   <span>{note.userId?.firstname} {note.userId?.lastname}</span>
