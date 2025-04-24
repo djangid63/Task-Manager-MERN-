@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode'
 import axios from 'axios';
 
 
@@ -7,7 +8,25 @@ function App() {
   const [searchStr, setSearchStr] = useState('');
   const [users, setUsers] = useState([]);
 
+  const [currentUser, setCurrentUser] = useState(null);
+  const [assignedBy, setAssignedBy] = useState([])
+  const [assignedTo, setAssignedTo] = useState([])
+
   const token = localStorage.getItem('token');
+
+  const getCurrentUser = () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+
+      const decoded = jwtDecode(token);
+      setCurrentUser(decoded);
+      return decoded;
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return null;
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -19,13 +38,30 @@ function App() {
         }
       }
       const getDb = await axios.get('http://localhost:5000/task/getTask', config);
-      console.log("Received task data:", getDb.data.taskData);
-      setNotes(getDb.data.taskData)
+      const taskData = getDb.data.taskData;
+
+      setNotes(taskData)
 
     } catch (error) {
       console.error('Error fetching notes:', error);
     }
   }
+
+
+  useEffect(() => {
+    if (notes.length > 0 && currentUser) {
+      const filterAssigedTo = notes.filter((note) => note.assignedTo.email === currentUser.email)
+      const filterAssigedBy = notes.filter((note) => note.userId.email === currentUser.email)
+      setAssignedBy(filterAssigedBy)
+      setAssignedTo(filterAssigedTo)
+    }
+  }, [notes, currentUser]);
+
+
+
+  console.log("----------Tooooooooo----------", assignedTo);
+  console.log("----------Byyyyyyyyyyyy----------", assignedBy);
+
 
   const fetchUsers = async () => {
     try {
@@ -40,8 +76,15 @@ function App() {
   useEffect(() => {
     fetchData();
     fetchUsers();
+    const userData = getCurrentUser();
+    console.log("Current user data:", userData);
   }, []);
 
+  // Add a function to log out
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  };
 
   // To delete the data on the basis of _ID
   async function handleDelete(id) {
@@ -97,12 +140,12 @@ function App() {
   };
 
   const [activeCategory, setActiveCategory] = useState('All');
+  const [activeView, setActiveView] = useState('All');
 
   // State for new note
   const [newNote, setNewNote] = useState({
     title: '',
     content: '',
-    category: 'Personal',
     color: 'bg-emerald-200',
     assignedTo: ''
   });
@@ -111,22 +154,24 @@ function App() {
   const [showNoteForm, setShowNoteForm] = useState(false);
 
 
-  // Categories with counts
+  // Only keep All category
   const categories = [
-    { name: 'All', count: notes?.length || 0, icon: '📋' },
-    { name: 'Work', count: notes?.filter(note => note?.category === 'Work')?.length || 0, icon: '💼' },
-    { name: 'Personal', count: notes?.filter(note => note?.category === 'Personal')?.length || 0, icon: '👤' },
-    { name: 'Learning', count: notes?.filter(note => note?.category === 'Learning')?.length || 0, icon: '📚' }
+    { name: 'All', count: notes?.length || 0, icon: '📋' }
   ];
 
-  // Filter notes based on active category
-  const filteredNotes = activeCategory === 'All'
-    ? notes
-    : notes.filter(note => note.category === activeCategory);
+  // Filter notes based on active view only
+  let filteredNotes = notes;
+
+  // Apply the view filter
+  if (activeView === 'AssignedToMe') {
+    filteredNotes = assignedTo;
+  } else if (activeView === 'AssignedByMe') {
+    filteredNotes = assignedBy;
+  }
 
   // Searching
   const searchedData = filteredNotes.filter((note) =>
-    searchStr != "" ? note.title.toLowerCase().includes(searchStr.toLowerCase()) : filteredNotes
+    searchStr !== "" ? note.title.toLowerCase().includes(searchStr.toLowerCase()) : filteredNotes
   );
 
   // Handle adding new note
@@ -150,7 +195,6 @@ function App() {
       setNewNote({
         title: '',
         content: '',
-        category: 'Personal',
         color: 'bg-emerald-200',
         assignedTo: ''
       });
@@ -160,12 +204,46 @@ function App() {
     }
   };
 
+  // Simple function to toggle task status
+  const toggleTaskStatus = async (id, currentStatus) => {
+    try {
+      // Simple toggle between 'pending' and 'completed'
+      const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+
+      await axios.patch(
+        `http://localhost:5000/task/updateStatus/${id}`,
+        { status: newStatus },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+
+      // Refresh data
+      fetchData();
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
+      {/* /* Sidebar */}
       <div className="w-64 p-6 bg-white shadow-sm">
         <h1 className="text-3xl font-bold text-gray-800">MindMark</h1>
         <p className="text-gray-500 text-sm mt-1">Keep your thoughts organized</p>
+
+        {/* Display current user info */}
+        {currentUser && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <div className="text-sm font-medium text-gray-700">Logged in as:</div>
+            <div className="text-blue-600 font-medium">{currentUser.email}</div>
+            <button
+              onClick={handleLogout}
+              className="mt-2 text-xs text-red-600 hover:text-red-800"
+            >
+              Sign out
+            </button>
+          </div>
+        )}
+
         <div className='flex items-center justify-center'>
           <button
             onClick={() => setShowNoteForm(true)}
@@ -176,13 +254,55 @@ function App() {
         </div>
 
         <div className="mt-8">
+
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Categories</h2>
           <ul className="space-y-2">
+            <li className="mt-4">
+              <button
+                onClick={() => {
+                  setActiveView('AssignedToMe');
+                  setActiveCategory('All');
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 ${activeView === 'AssignedToMe'
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  } transition-colors`}
+              >
+                <span className="text-blue-500">📥</span>
+                <span>Task Given to me</span>
+                <span className="ml-auto bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600">
+                  {assignedTo?.length || 0}
+                </span>
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  setActiveView('AssignedByMe');
+                  setActiveCategory('All');
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 ${activeView === 'AssignedByMe'
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  } transition-colors`}
+              >
+                <span className="text-green-500">📤</span>
+                <span>Task Given By me</span>
+                <span className="ml-auto bg-gray-100 px-2 py-0.5 rounded-full text-xs text-gray-600">
+                  {assignedBy?.length || 0}
+                </span>
+              </button>
+            </li>
             {categories.map(category => (
               <li key={category.name}>
                 <button
-                  onClick={() => setActiveCategory(category.name)}
-                  className={`w-full text-left px-3 py-2 rounded-lg flex justify-between items-center ${activeCategory === category.name ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
+                  onClick={() => {
+                    setActiveCategory(category.name);
+                    setActiveView('All');
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg flex justify-between items-center ${activeCategory === category.name && activeView === 'All'
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-600 hover:bg-gray-100'
                     }`}
                 >
                   <div className="flex items-center gap-2">
@@ -193,6 +313,8 @@ function App() {
                 </button>
               </li>
             ))}
+
+
           </ul>
         </div>
       </div>
@@ -201,18 +323,17 @@ function App() {
       <div className="flex-1 p-8">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800">
-            {activeCategory === 'All' ? 'All Notes' : activeCategory}
+            {activeView === 'AssignedToMe'
+              ? 'Tasks Assigned To Me'
+              : activeView === 'AssignedByMe'
+                ? 'Tasks Assigned By Me'
+                : activeCategory === 'All'
+                  ? 'All Notes'
+                  : activeCategory}
           </h2>
 
           <div className="flex space-x-4">
-            <div className=" ">
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                onClick={() => window.location.href = '/dashboard'}
-              >
-                Dashboard
-              </button>
-            </div>
+
             <div>
               <input
                 type="text"
@@ -250,15 +371,6 @@ function App() {
             </div>
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
-                <select
-                  value={newNote.category}
-                  onChange={(e) => setNewNote({ ...newNote, category: e.target.value })}
-                  className="border border-gray-200 rounded px-3 py-1 text-sm focus:outline-none focus:border-blue-500"
-                >
-                  <option value="Work">Work</option>
-                  <option value="Personal">Personal</option>
-                  <option value="Learning">Learning</option>
-                </select>
 
                 {/* User dropdown menu */}
                 <select
@@ -278,15 +390,7 @@ function App() {
                   }
                 </select>
 
-                <div className="flex space-x-1">
-                  {['bg-amber-200', 'bg-emerald-200', 'bg-violet-200', 'bg-rose-200', 'bg-sky-200'].map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setNewNote({ ...newNote, color })}
-                      className={`w-5 h-5 rounded-full ${color} ${newNote.color === color ? 'ring-2 ring-blue-500' : ''}`}
-                    />
-                  ))}
-                </div>
+
               </div>
               <div className="flex space-x-2">
                 <button
@@ -310,31 +414,34 @@ function App() {
         {/* Notes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 grid-rows-2 lg:grid-cols-3 gap-6">
           {searchedData.map(note => (
-            <div>
-              <div key={note._id} className={`${note.color} rounded-t-xl p-5 shadow-sm hover:shadow-md transition-shadow`}>
+            <div key={note._id} >
+              <div className={`${note.color} rounded-t-xl p-5 shadow-sm hover:shadow-md transition-shadow`}>
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="font-medium text-lg text-gray-800">{note.title}</h3>
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={() => handleEditClick(note)}
-                      className="text-gray-400 hover:text-gray-600">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => { handleDelete(note._id); }}
-                      className="text-gray-400 hover:text-gray-600">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
+
+                  {/* Only show edit/delete buttons if NOT in the All view */}
+                  {activeView !== 'All' && (
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => handleEditClick(note)}
+                        className="text-gray-400 hover:text-gray-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => { handleDelete(note._id); }}
+                        className="text-gray-400 hover:text-gray-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <p className="text-gray-600 mb-4 whitespace-pre-line">{note.content}</p>
                 <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
-                  <span>{note.category}</span>
-                  <span>{note.date}</span>
+                  <span>{new Date(note.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
 
@@ -347,9 +454,27 @@ function App() {
                   <span className="font-medium">Assigned To:</span>
                   <span>{note.assignedTo?.firstname} {note.assignedTo?.lastname}</span>
                 </div>
+
+                {/* Simplified status display - only for Task Given to me and Task Given by me views */}
+                {activeView !== 'All' && (
+                  <div className="flex items-center justify-between mt-2">
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={note.status === 'completed'}
+                        onChange={() => toggleTaskStatus(note._id, note.status)}
+                        className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                      />
+                      <span className="ml-2">
+                        {note.status === 'completed' ? 'Completed' : 'Pending'}
+                      </span>
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           ))}
+
         </div>
 
         {/* Edit Note Form */}
@@ -374,15 +499,6 @@ function App() {
             </div>
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
-                <select
-                  value={editingNote.category}
-                  onChange={(e) => setEditingNote({ ...editingNote, category: e.target.value })}
-                  className="border border-gray-200 rounded px-3 py-1 text-sm focus:outline-none focus:border-blue-500"
-                >
-                  <option value="Work">Work</option>
-                  <option value="Personal">Personal</option>
-                  <option value="Learning">Learning</option>
-                </select>
 
                 {/* User dropdown menu for edit form */}
                 <select
@@ -402,15 +518,7 @@ function App() {
                   }
                 </select>
 
-                <div className="flex space-x-1">
-                  {['bg-amber-200', 'bg-emerald-200', 'bg-violet-200', 'bg-rose-200', 'bg-sky-200'].map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => setEditingNote({ ...editingNote, color })}
-                      className={`w-5 h-5 rounded-full ${color} ${editingNote.color === color ? 'ring-2 ring-blue-500' : ''}`}
-                    />
-                  ))}
-                </div>
+
               </div>
               <div className="flex space-x-2">
                 <button

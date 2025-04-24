@@ -136,3 +136,38 @@ exports.getUserTasks = async (req, res) => {
     return res.status(500).json({ success: false, message: "Failed to fetch user tasks" });
   }
 }
+
+exports.updateTaskStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validate the status value
+    if (!['pending', 'completed'].includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid status value" });
+    }
+
+    const task = await taskModel.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    )
+      .populate('userId')
+      .populate('assignedTo');
+
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Task marked as ${status}`,
+      task
+    });
+  } catch (error) {
+    console.log("--------task status update---------", error);
+    return res.status(500).json({ success: false, message: "Failed to update task status" });
+  }
+}
+
+

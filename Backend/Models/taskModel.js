@@ -20,7 +20,12 @@ const taskSchema = new Schema({
   isDisabled: {
     type: Boolean,
     default: false
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'completed'],
+    default: 'pending'
   }
-})
+}, { timestamps: true })
 
 module.exports = mongoose.model("tasks", taskSchema)
