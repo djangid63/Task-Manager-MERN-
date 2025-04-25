@@ -15,6 +15,12 @@ const Dashboard = () => {
   const [disabledTaskData, setDisabledTaskData] = useState([])
   const [disabledTaskCount, setDisabledTaskCount] = useState(0);
 
+  // New state variables for pending and completed tasks
+  const [pendingTaskData, setPendingTaskData] = useState([]);
+  const [pendingTaskCount, setPendingTaskCount] = useState(0);
+  const [completedTaskData, setCompletedTaskData] = useState([]);
+  const [completedTaskCount, setCompletedTaskCount] = useState(0);
+
   // State to track which card is selected
   const [selectedCard, setSelectedCard] = useState('admins');
 
@@ -68,6 +74,17 @@ const Dashboard = () => {
     } catch (error) {
       console.log("Count error log", error);
     }
+  };
+
+  // Count pending and completed tasks
+  const countTasksByStatus = (tasks) => {
+    const pending = tasks.filter(task => task.status === 'pending');
+    const completed = tasks.filter(task => task.status === 'completed');
+
+    setPendingTaskData(pending);
+    setPendingTaskCount(pending.length);
+    setCompletedTaskData(completed);
+    setCompletedTaskCount(completed.length);
   };
 
   // Function to fetch users for task assignment dropdown
@@ -139,6 +156,8 @@ const Dashboard = () => {
     try {
       const response = await axios.get(`${BASE_URL}/task/getTask`)
       setTaskData(response.data.taskData)
+      // Count tasks by status after fetching all tasks
+      countTasksByStatus(response.data.taskData);
       console.log(taskData);
     } catch (error) {
       console.log("-----Task Data-----", error);
@@ -164,7 +183,9 @@ const Dashboard = () => {
   const cardColors = {
     admins: { bg: "bg-blue-100", hover: "hover:bg-blue-200", border: "border-blue-300", text: "text-blue-800", icon: "text-blue-500" },
     users: { bg: "bg-green-100", hover: "hover:bg-green-200", border: "border-green-300", text: "text-green-800", icon: "text-green-500" },
-    tasks: { bg: "bg-purple-100", hover: "hover:bg-purple-200", border: "border-purple-300", text: "text-purple-800", icon: "text-purple-500" }
+    tasks: { bg: "bg-purple-100", hover: "hover:bg-purple-200", border: "border-purple-300", text: "text-purple-800", icon: "text-purple-500" },
+    pendingTasks: { bg: "bg-yellow-100", hover: "hover:bg-yellow-200", border: "border-yellow-300", text: "text-yellow-800", icon: "text-yellow-500" },
+    completedTasks: { bg: "bg-green-100", hover: "hover:bg-green-200", border: "border-green-300", text: "text-green-800", icon: "text-green-500" }
   };
 
   // Icons for each card
@@ -187,6 +208,18 @@ const Dashboard = () => {
           <svg xmlns="http://www.w3.org/2000/svg" className={`h-8 w-8 ${cardColors[type].icon}`} viewBox="0 0 20 20" fill="currentColor">
             <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
             <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'pendingTasks':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className={`h-8 w-8 ${cardColors[type].icon}`} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+          </svg>
+        );
+      case 'completedTasks':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className={`h-8 w-8 ${cardColors[type].icon}`} viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
         );
       default:
@@ -310,6 +343,7 @@ const Dashboard = () => {
                   <th className="py-3 px-4 text-left">Title</th>
                   <th className="py-3 px-4 text-left">Content</th>
                   <th className="py-3 px-4 text-left">Assigned by</th>
+                  <th className="py-3 px-4 text-left">Status</th>
                   <th className="py-3 px-4 text-left">Actions</th>
                 </tr>
               </thead>
@@ -318,14 +352,100 @@ const Dashboard = () => {
                   <tr key={task._id} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="py-3 px-4 text-gray-800">{task.title}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                        task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                      <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
                         {task.content}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-gray-600">{task.userId.firstname + " " + task.userId.lastname}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-yellow-100 text-yellow-800'}`}>
+                        {task.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <button onClick={() => openEditTaskModal(task)} className="text-blue-500 hover:text-blue-700">Edit</button>
+                      <button onClick={() => deleteTask(task._id)} className="text-red-500 hover:text-red-700 ml-2">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    } else if (selectedCard === 'pendingTasks') {
+      return (
+        <div className="mt-8 animate-fadeIn">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">Pending Tasks</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
+              <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                  <th className="py-3 px-4 text-left">Title</th>
+                  <th className="py-3 px-4 text-left">Content</th>
+                  <th className="py-3 px-4 text-left">Assigned by</th>
+                  <th className="py-3 px-4 text-left">Assigned to</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {pendingTaskData.map(task => (
+                  <tr key={task._id} className="hover:bg-gray-50 transition-colors duration-200">
+                    <td className="py-3 px-4 text-gray-800">{task.title}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                        {task.content}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">
+                      {task.userId && `${task.userId.firstname} ${task.userId.lastname}`}
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">
+                      {task.assignedTo && `${task.assignedTo.firstname} ${task.assignedTo.lastname}`}
+                    </td>
+                    <td className="py-3 px-4">
+                      <button onClick={() => openEditTaskModal(task)} className="text-blue-500 hover:text-blue-700">Edit</button>
+                      <button onClick={() => deleteTask(task._id)} className="text-red-500 hover:text-red-700 ml-2">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    } else if (selectedCard === 'completedTasks') {
+      return (
+        <div className="mt-8 animate-fadeIn">
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">Completed Tasks</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
+              <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                  <th className="py-3 px-4 text-left">Title</th>
+                  <th className="py-3 px-4 text-left">Content</th>
+                  <th className="py-3 px-4 text-left">Assigned by</th>
+                  <th className="py-3 px-4 text-left">Assigned to</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {completedTaskData.map(task => (
+                  <tr key={task._id} className="hover:bg-gray-50 transition-colors duration-200">
+                    <td className="py-3 px-4 text-gray-800">{task.title}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                        {task.content}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">
+                      {task.userId && `${task.userId.firstname} ${task.userId.lastname}`}
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">
+                      {task.assignedTo && `${task.assignedTo.firstname} ${task.assignedTo.lastname}`}
+                    </td>
                     <td className="py-3 px-4">
                       <button onClick={() => openEditTaskModal(task)} className="text-blue-500 hover:text-blue-700">Edit</button>
                       <button onClick={() => deleteTask(task._id)} className="text-red-500 hover:text-red-700 ml-2">Delete</button>
@@ -563,8 +683,8 @@ const Dashboard = () => {
                   onChange={handleTaskFormChange}
                   className="block w-full border border-gray-300 rounded-md p-2"
                 >
-                  <option value="Pending">Pending</option>
-                  <option value="Completed">Completed</option>
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
                 </select>
               </div>
               <div className="mb-4">
@@ -624,7 +744,7 @@ const Dashboard = () => {
             <p className="text-gray-600 text-md">Here's your task management overview.</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div
               className={`${cardColors.admins.bg} ${cardColors.admins.hover} ${cardColors.admins.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'admins' ? 'ring-4 ring-blue-300 scale-105' : ''}`}
               onClick={() => { handleCardClick('admins'); getAdmins() }}
@@ -663,6 +783,36 @@ const Dashboard = () => {
                 {renderIcon('tasks')}
               </div>
             </div>
+          </div>
+
+          {/* New row for task status cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div
+              className={`${cardColors.pendingTasks.bg} ${cardColors.pendingTasks.hover} ${cardColors.pendingTasks.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'pendingTasks' ? 'ring-4 ring-yellow-300 scale-105' : ''}`}
+              onClick={() => { handleCardClick('pendingTasks'); getTask() }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-lg font-semibold ${cardColors.pendingTasks.text}`}>Pending Tasks</h2>
+                  <p className="text-3xl font-bold mt-1 text-gray-800">{pendingTaskCount}</p>
+                </div>
+                {renderIcon('pendingTasks')}
+              </div>
+            </div>
+
+            <div
+              className={`${cardColors.completedTasks.bg} ${cardColors.completedTasks.hover} ${cardColors.completedTasks.border} border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'completedTasks' ? 'ring-4 ring-green-300 scale-105' : ''}`}
+              onClick={() => { handleCardClick('completedTasks'); getTask() }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={`text-lg font-semibold ${cardColors.completedTasks.text}`}>Completed Tasks</h2>
+                  <p className="text-3xl font-bold mt-1 text-gray-800">{completedTaskCount}</p>
+                </div>
+                {renderIcon('completedTasks')}
+              </div>
+            </div>
+
             <div
               className={`bg-red-100 hover:bg-red-200 border-red-300 border rounded-lg shadow-md p-5 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedCard === 'disabledTasks' ? 'ring-4 ring-red-300 scale-105' : ''}`}
               onClick={() => { handleCardClick('disabledTasks'); getDisabledTask() }}
