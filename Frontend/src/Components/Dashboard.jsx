@@ -31,6 +31,9 @@ const Dashboard = () => {
   // State to track which card is selected
   const [selectedCard, setSelectedCard] = useState('admins');
 
+  // Add sorting state
+  const [sortDirection, setSortDirection] = useState('desc');
+
   // New state variables for task CRUD operations
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [modalType, setModalType] = useState('create'); // 'create' or 'edit'
@@ -235,13 +238,30 @@ const Dashboard = () => {
     }
   };
 
+  // Sort tasks by date
+  const sortTasksByDate = (tasks) => {
+    if (!tasks || tasks.length === 0) return [];
+
+    return [...tasks].sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+  };
+
+  // Toggle sort direction
+  const toggleSortDirection = () => {
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
   // Show Task Data 
   const getTask = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/task/getTask`)
-      setTaskData(response.data.taskData)
+      const tasks = response.data.taskData;
+      setTaskData(tasks);
       // Count tasks by status after fetching all tasks
-      countTasksByStatus(response.data.taskData);
+      countTasksByStatus(tasks);
       console.log(taskData);
     } catch (error) {
       console.log("-----Task Data-----", error);
@@ -453,15 +473,32 @@ const Dashboard = () => {
               <h3 className="text-xl font-semibold text-gray-800">
                 Tasks for {selectedFilteredUser.firstname} {selectedFilteredUser.lastname}
               </h3>
-              <button
-                onClick={clearSelectedUser}
-                className="text-blue-600 hover:text-blue-800 flex items-center"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                </svg>
-                Back to all tasks
-              </button>
+              <div className="flex items-center">
+                <button
+                  onClick={toggleSortDirection}
+                  className="flex items-center px-3 py-1.5 mr-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+                >
+                  <span className="mr-1">Sort by Date</span>
+                  {sortDirection === 'asc' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                    </svg>
+                  )}
+                </button>
+                <button
+                  onClick={clearSelectedUser}
+                  className="text-blue-600 hover:text-blue-800 flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                  </svg>
+                  Back to all tasks
+                </button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
@@ -516,6 +553,24 @@ const Dashboard = () => {
       return (
         <div className="mt-8 animate-fadeIn">
           <h3 className="text-xl font-semibold mb-4 text-gray-800">Task Details</h3>
+          <div className="flex justify-between items-center mb-2">
+            <div></div>
+            <button
+              onClick={toggleSortDirection}
+              className="flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+            >
+              <span className="mr-1">Sort by Date</span>
+              {sortDirection === 'asc' ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                </svg>
+              )}
+            </button>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
               <thead className="bg-gray-100 text-gray-700">
@@ -528,7 +583,7 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {taskData.map(task => (
+                {sortTasksByDate(taskData).map(task => (
                   <tr key={task._id} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="py-3 px-4 text-gray-800">{task.title}</td>
                     <td className="py-3 px-4">
@@ -607,6 +662,24 @@ const Dashboard = () => {
       return (
         <div className="mt-8 animate-fadeIn">
           <h3 className="text-xl font-semibold mb-4 text-gray-800">Pending Tasks</h3>
+          <div className="flex justify-between items-center mb-2">
+            <div></div>
+            <button
+              onClick={toggleSortDirection}
+              className="flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+            >
+              <span className="mr-1">Sort by Date</span>
+              {sortDirection === 'asc' ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                </svg>
+              )}
+            </button>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
               <thead className="bg-gray-100 text-gray-700">
@@ -648,6 +721,24 @@ const Dashboard = () => {
       return (
         <div className="mt-8 animate-fadeIn">
           <h3 className="text-xl font-semibold mb-4 text-gray-800">Completed Tasks</h3>
+          <div className="flex justify-between items-center mb-2">
+            <div></div>
+            <button
+              onClick={toggleSortDirection}
+              className="flex items-center px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+            >
+              <span className="mr-1">Sort by Date</span>
+              {sortDirection === 'asc' ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                </svg>
+              )}
+            </button>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
               <thead className="bg-gray-100 text-gray-700">
@@ -660,7 +751,7 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {completedTaskData.map(task => (
+                {sortTasksByDate(completedTaskData).map(task => (
                   <tr key={task._id} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="py-3 px-4 text-gray-800">{task.title}</td>
                     <td className="py-3 px-4">
