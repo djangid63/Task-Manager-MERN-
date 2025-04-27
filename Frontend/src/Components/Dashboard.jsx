@@ -536,7 +536,9 @@ const Dashboard = () => {
                         {task.content}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{task.userId.firstname + " " + task.userId.lastname}</td>
+                    <td className="py-3 px-4 text-gray-600">
+                      {task.userId ? `${task.userId.firstname} ${task.userId.lastname || ''}` : 'Unknown'}
+                    </td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'completed'
                         ? 'bg-green-100 text-green-800'
@@ -695,6 +697,7 @@ const Dashboard = () => {
                   <th className="py-3 px-4 text-left">Content</th>
                   <th className="py-3 px-4 text-left">Category</th>
                   <th className="py-3 px-4 text-left">Assigned To</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -702,8 +705,8 @@ const Dashboard = () => {
                   <tr key={task._id} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="py-3 px-4 text-gray-800">{task.title}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                        task.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                      <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        task.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
                         {task.content}
@@ -711,10 +714,26 @@ const Dashboard = () => {
                     </td>
                     <td className="py-3 px-4 text-gray-600">{task.category}</td>
                     <td className="py-3 px-4 text-gray-600">{task.userId ? `${task.userId.firstname} ${task.userId.lastname}` : 'N/A'}</td>
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => toggleTaskStatus(task._id, task.isDisabled)}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-green-500"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Activate Task
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {disabledTaskData.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No inactive tasks found.
+              </div>
+            )}
           </div>
         </div>
       );
@@ -856,8 +875,8 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem('token');
 
-      await axios.patch(`${BASE_URL}/task/toggleStatus/${taskId}`,
-        { isDisabled: !isDisabled },
+      await axios.patch(`${BASE_URL}/task/toggleDisabled/${taskId}`,
+        {},  // No need to send the status in the body as the backend will toggle it
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -865,10 +884,14 @@ const Dashboard = () => {
         }
       );
 
+      // Refresh task counts and lists
       fetchTaskCount();
       fetchDisableTaskCount();
       getTask();
       getDisabledTask();
+
+      // Show success message
+      alert(isDisabled ? "Task activated successfully!" : "Task deactivated successfully!");
     } catch (error) {
       console.error("Error toggling task status:", error);
       alert("Failed to change task status. Please try again.");

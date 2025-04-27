@@ -9,6 +9,7 @@ router.post('/addTask', auth, taskController.addTask)
 router.delete('/deleteTask/:id', auth, taskController.deleteTask)
 router.patch('/updateTasks/:id', auth, taskController.updateTask)
 router.patch('/updateStatus/:id', auth, taskController.updateTaskStatus)
+router.patch('/toggleDisabled/:id', auth, taskController.toggleTaskDisabled) // New endpoint for toggling disabled status
 router.get('/myTasks', auth, taskController.getUserTasks)
 
 // For Dashboard

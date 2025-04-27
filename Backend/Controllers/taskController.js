@@ -219,3 +219,31 @@ exports.updateTaskStatus = async (req, res) => {
 }
 
 
+exports.toggleTaskDisabled = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const task = await taskModel.findById(id);
+
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    const updatedTask = await taskModel.findByIdAndUpdate(
+      id,
+      { isDisabled: !task.isDisabled },
+      { new: true }
+    ).populate('userId');
+
+    return res.status(200).json({
+      success: true,
+      message: updatedTask.isDisabled ? "Task deactivated successfully" : "Task activated successfully",
+      task: updatedTask
+    });
+  } catch (error) {
+    console.log("--------toggle task disabled status---------", error);
+    return res.status(500).json({ success: false, message: "Failed to toggle task status" });
+  }
+}
+
+
