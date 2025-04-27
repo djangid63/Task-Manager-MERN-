@@ -1,6 +1,6 @@
 const taskModel = require('../Models/taskModel')
 const userModel = require('../Models/UserModel')
-const { sendCreationEmail } = require('../Utils/emailService')
+const { sendCreationEmail, sendStatusUpdateEmail } = require('../Utils/emailService')
 // Your sender email for Nodemailer
 const SENDER_EMAIL = "jangiddummy6375@gmail.com";
 const mailkey = "hneo ulux pgln lgts"
@@ -33,19 +33,35 @@ exports.getDisabledTasks = async (req, res) => {
 
 exports.addTask = async (req, res) => {
   try {
-
     req.body.userId = req.user._id
-    const { userEmail, title, content } = req.body
-    const findCurrUser = await userModel.findOne({ email: userEmail })
-    console.log('findCurrUser------------->>', findCurrUser);
-    console.log(`-----email -> ${userEmail}, title-> ${title}, content -> ${content}----`);
-
-
+    const { userEmail, title, content, assignedTo, assignedToEmail } = req.body
 
     const taskData = new taskModel(req.body);
     const saveTask = await taskData.save();
 
-    sendCreationEmail(findCurrUser.email, findCurrUser.firstname, findCurrUser.lastname, title, SENDER_EMAIL, mailkey)
+
+    if (assignedTo) {
+      let assignedUser;
+
+      if (assignedToEmail) {
+        assignedUser = await userModel.findOne({ email: assignedToEmail });
+      }
+
+
+      if (assignedUser) {
+        sendCreationEmail(
+          assignedUser.email,
+          assignedUser.firstname,
+          assignedUser.lastname,
+          title,
+          SENDER_EMAIL,
+          mailkey
+        );
+        console.log(`Task assignment email sent to: ${assignedUser.email}`);
+      } else {
+        console.log("Could not find assigned user with ID:", assignedTo);
+      }
+    }
 
     const populatedTask = await taskModel.findById(saveTask._id)
       .populate({
@@ -170,6 +186,25 @@ exports.updateTaskStatus = async (req, res) => {
 
     if (!task) {
       return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    // Send email notification to the assigned user about the status update
+    if (task.assignedTo && task.assignedTo.email) {
+      try {
+        await sendStatusUpdateEmail(
+          task.assignedTo.email,
+          task.assignedTo.firstname,
+          task.assignedTo.lastname,
+          task.title,
+          status,
+          SENDER_EMAIL,
+          mailkey
+        );
+        console.log(`Task status update email sent to: ${task.assignedTo.email}`);
+      } catch (emailError) {
+        console.error('Error sending status update email:', emailError);
+        // Continue with the response even if email fails
+      }
     }
 
     return res.status(200).json({

@@ -65,5 +65,35 @@ const sendCreationEmail = async (email, firstname, lastname, title, senderEmail,
   }
 }
 
-module.exports = { sendOtpEmail };
-module.exports = { sendCreationEmail };
+const sendStatusUpdateEmail = async (email, firstname, lastname, title, status, senderEmail, mailkey) => {
+  try {
+    const transporter = createTransporter(senderEmail, mailkey);
+    const statusText = status === 'completed' ? 'completed' : 'marked as pending';
+    const colorStyle = status === 'completed' ? '#4CAF50' : '#FFC107';
+
+    const mailOptions = {
+      from: "jangiddummy6375@gmail.com",
+      to: email,
+      subject: `Task ${statusText}: ${title}`,
+      html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2>Hello ${firstname} ${lastname},</h2>
+        <p>The status of your task "${title}" has been <strong style="color: ${colorStyle};">${statusText}</strong>.</p>
+        <div style="background-color: #f8f9fa; padding: 15px; margin: 20px 0; border-left: 4px solid ${colorStyle};">
+          <p>You can view and manage your tasks from your dashboard.</p>
+        </div>
+        <p>If you have any questions or need assistance, please feel free to contact our support team.</p>
+        <p style="margin-top: 20px; color: #666;">Thank you for using our Task Manager!</p>
+      </div>
+      `
+    };
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Status update email sent: ', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending status update email: ', error);
+    return false;
+  }
+};
+
+module.exports = { sendOtpEmail, sendCreationEmail, sendStatusUpdateEmail };

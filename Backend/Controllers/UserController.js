@@ -73,15 +73,15 @@ exports.login = async (req, res) => {
     }
 
     // New OOTP
-    // const otp = Math.floor((Math.random() * 900000) + 100000);
-    // const currTimer = moment();
-    // const otpTimer = currTimer.clone().add(10, "minutes");
+    const otp = Math.floor((Math.random() * 900000) + 100000);
+    const currTimer = moment();
+    const otpTimer = currTimer.clone().add(10, "minutes");
 
-    // user.otp = otp;
-    // user.otpTimer = otpTimer;
-    // await user.save();
+    user.otp = otp;
+    user.otpTimer = otpTimer;
+    await user.save();
 
-    // await sendOtpEmail(email, otp, user.firstname, SENDER_EMAIL, mailkey);
+    await sendOtpEmail(email, otp, user.firstname, SENDER_EMAIL, mailkey);
     const token = jwt.sign({ email: user.email, role: user.role }, secretKey);
 
     return res.status(200).json({

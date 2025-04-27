@@ -45,7 +45,6 @@ const Login = () => {
 
       if (loginType === 'admin') {
         if (response.data.success) {
-
           if (!response.data.token) {
             alert("Authentication failed: No token received");
             return;
@@ -59,6 +58,14 @@ const Login = () => {
         }
       } else if (loginType === 'user') {
         if (response.data.success) {
+          // If OTP is required
+          if (response.data.requiresOtp) {
+            setUserEmail(formData.email);
+            // setShowOtpVerification(true);
+            alert("OTP sent to your email. Please verify.");
+            return;
+          }
+
           if (!response.data.token) {
             alert("Authentication failed: No token received");
             return;

@@ -12,6 +12,7 @@ function App() {
   const [assignedBy, setAssignedBy] = useState([])
   const [assignedTo, setAssignedTo] = useState([])
 
+
   const token = localStorage.getItem('token');
 
   const getCurrentUser = () => {
@@ -50,10 +51,10 @@ function App() {
 
   useEffect(() => {
     if (notes.length > 0 && currentUser) {
-      const filterAssigedTo = notes.filter((note) => note.assignedTo.email === currentUser.email)
-      const filterAssigedBy = notes.filter((note) => note.userId.email === currentUser.email)
-      setAssignedBy(filterAssigedBy)
-      setAssignedTo(filterAssigedTo)
+      const filterAssigedTo = notes.filter((note) => note.assignedTo && note.assignedTo.email === currentUser.email);
+      const filterAssigedBy = notes.filter((note) => note.userId && note.userId.email === currentUser.email);
+      setAssignedBy(filterAssigedBy);
+      setAssignedTo(filterAssigedTo);
     }
   }, [notes, currentUser]);
 
@@ -177,7 +178,7 @@ function App() {
   const searchedData = filteredNotes.filter((note) =>
     searchStr !== "" ? note.title.toLowerCase().includes(searchStr.toLowerCase()) : filteredNotes
   );
-
+  console.log("assignedTO-------------", assignedTo);
   // Handle adding new note
   const handleAddNote = async () => {
     if (newNote.title.trim() !== '' && newNote.content.trim() !== '' && newNote.assignedTo) {
@@ -187,16 +188,22 @@ function App() {
             'Authorization': `Bearer ${token}`
           }
         }
+
+        // Find the assigned user to get their email
+        const assignedUser = users.find(user => user._id === newNote.assignedTo);
+
         const noteWithUser = {
           ...newNote,
-          userEmail: currentUser.email
+          assignedToEmail: assignedUser ? assignedUser.email : null
         };
+
+        console.log('Sending task data:', noteWithUser);
         const response = await axios.post('http://localhost:5000/task/addTask', noteWithUser, config);
         console.log('Note added successfully:', response.data);
-
       } catch (error) {
         console.error("Error while posting", error);
       }
+
       // Use this for not re-rendering the whole notes obj
       // Or use this
       fetchData()
@@ -241,10 +248,10 @@ function App() {
         {currentUser && (
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <div className="text-sm font-medium text-gray-700">Logged in as:</div>
-            <div className="text-blue-600 font-medium">{currentUser.email}</div>
+            <div className="text-blue-600 font-normal text-sm py-1">{currentUser.email}</div>
             <button
               onClick={handleLogout}
-              className="mt-2 text-xs text-red-600 hover:text-red-800"
+              className="mt-2 text-xs capitalize text-red-600 hover:text-red-800"
             >
               Sign out
             </button>
@@ -320,8 +327,6 @@ function App() {
                 </button>
               </li>
             ))}
-
-
           </ul>
         </div>
       </div>
