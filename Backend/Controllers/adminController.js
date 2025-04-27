@@ -1,12 +1,12 @@
-const adminModel = require("../Models/adminModel")
+const userModel = require("../Models/UserModel")
 const bcrypt = require('bcrypt')
 
 
 exports.Signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body
+    const { firstname, lastname, email, password } = req.body
 
-    const isMailExists = await adminModel.findOne({ email })
+    const isMailExists = await userModel.findOne({ email })
 
     if (isMailExists) {
       return res.status(409).json({ status: false, message: "Email already exists" })
@@ -15,42 +15,53 @@ exports.Signup = async (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(password, salt)
 
-    const signData = new adminModel({ name, email, password: hashedPassword })
+    const signData = new userModel({
+      firstname,
+      lastname,
+      email,
+      password: hashedPassword,
+      role: 'admin' // Set role to admin
+    })
     const saveData = await signData.save()
 
-    return res.status(201).json({ success: true, message: "Sign up successfully", data: saveData })
+    return res.status(201).json({ success: true, message: "Admin sign up successfully", data: saveData })
   } catch (error) {
-    console.log("User sign up failed :", error);
+    console.log("Admin sign up failed :", error);
     return res.status(400).json({ success: false, message: "Sign up failed" })
   }
 }
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  const isExistingUser = await adminModel.findOne({ email })
+  try {
+    const user = await userModel.findOne({ email, role: 'admin' })
 
-  if (!isExistingUser.isDisabled == false) {
-    return res.status(404).json({ message: "Access revoked" })
+    if (!user) {
+      return res.status(404).json({ message: "Admin account not found" })
+    }
+
+    if (user.isDisabled) {
+      return res.status(404).json({ message: "Access revoked" })
+    }
+
+    const dbPassword = user.password;
+    const isMatch = bcrypt.compareSync(password, dbPassword)
+
+    if (!isMatch) {
+      return res.status(404).json({ success: false, message: "Password is incorrect" })
+    }
+
+    return res.status(201).json({ success: true, message: "Login successful" })
+  } catch (error) {
+    console.log("Login error:", error);
+    return res.status(500).json({ success: false, message: "Login failed" });
   }
-
-  if (!isExistingUser) {
-    return res.status(404).json({ message: "Please sign up before logging" })
-  }
-
-  const dbPassword = isExistingUser.password;
-
-  const isMatch = bcrypt.compareSync(password, dbPassword)
-  if (!isMatch) {
-    return res.status(404).json({ success: false, message: "Password is incorrect" })
-  }
-
-  return res.status(201).json({ success: true, message: "Login successful" })
 }
 
 
 exports.count = async (req, res) => {
   try {
-    const totalAdmin = await adminModel.countDocuments();
+    const totalAdmin = await userModel.countDocuments({ role: 'admin' });
     return res.status(200).json({ status: true, count: totalAdmin });
   } catch (error) {
     return res.status(500).json({ status: false, message: "Failed to count admins", error: error.message });
@@ -59,8 +70,7 @@ exports.count = async (req, res) => {
 
 exports.getAdmins = async (req, res) => {
   try {
-
-    const admins = await adminModel.find()
+    const admins = await userModel.find({ role: 'admin' })
 
     return res.status(200).json({
       success: true,
@@ -81,7 +91,7 @@ exports.toggleAccess = async (req, res) => {
       return res.status(400).json({ success: false, message: "Admin ID is required" });
     }
 
-    const updatedAdmin = await adminModel.findByIdAndUpdate(
+    const updatedAdmin = await userModel.findByIdAndUpdate(
       adminId,
       { isDisabled },
       { new: true }

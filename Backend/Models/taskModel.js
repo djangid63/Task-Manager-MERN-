@@ -1,5 +1,4 @@
 const mongoose = require("mongoose")
-const { type } = require("os")
 const Schema = mongoose.Schema
 
 const taskSchema = new Schema({
@@ -8,6 +7,7 @@ const taskSchema = new Schema({
   category: String,
   color: String,
 
+  // Both assignedTo and userId now reference the same 'user' collection
   assignedTo: {
     type: Schema.Types.ObjectId,
     ref: 'user'

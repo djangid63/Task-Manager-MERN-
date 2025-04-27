@@ -58,11 +58,6 @@ function App() {
   }, [notes, currentUser]);
 
 
-
-  console.log("----------Tooooooooo----------", assignedTo);
-  console.log("----------Byyyyyyyyyyyy----------", assignedBy);
-
-
   const fetchUsers = async () => {
     try {
       const response = await axios.get('http://localhost:5000/user/getUsers');
@@ -80,7 +75,6 @@ function App() {
     console.log("Current user data:", userData);
   }, []);
 
-  // Add a function to log out
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/';
@@ -112,7 +106,6 @@ function App() {
 
   const updateNote = async (id, updatedNote) => {
     try {
-      console.log("token form storage--------", token);
       const config = {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -195,7 +188,6 @@ function App() {
             'Authorization': `Bearer ${token}`
           }
         }
-        console.log("newNote being submitted:", newNote);
         const response = await axios.post('http://localhost:5000/task/addTask', newNote, config);
 
       } catch (error) {
@@ -219,7 +211,6 @@ function App() {
   // Simple function to toggle task status
   const toggleTaskStatus = async (id, currentStatus) => {
     try {
-      // Simple toggle between 'pending' and 'completed'
       const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
 
       await axios.patch(
@@ -425,10 +416,10 @@ function App() {
         {/* Notes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 grid-rows-2 lg:grid-cols-3 gap-6">
           {searchedData.map(note => (
-            <div key={note._id} >
-              <div className={`${getNoteColor(note)} bg-amber-200 rounded-t-xl p-5 shadow-sm hover:shadow-md transition-shadow`}>
+            <div key={note._id} className="h-auto flex flex-col">
+              <div className={`${getNoteColor(note)} bg-amber-200 rounded-t-xl p-5 shadow-sm hover:shadow-md transition-shadow flex-1 flex flex-col h-[220px]`}>
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-medium text-lg text-gray-800">{note.title}</h3>
+                  <h3 className="font-medium text-lg text-gray-800 truncate">{note.title}</h3>
 
                   {activeView !== 'All' && activeView !== 'AssignedToMe' && (
                     <div className="flex space-x-1">
@@ -449,13 +440,15 @@ function App() {
                     </div>
                   )}
                 </div>
-                <p className="text-gray-600 mb-4 whitespace-pre-line">{note.content}</p>
-                <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
+                <div className="overflow-y-auto flex-1 mb-4">
+                  <p className="text-gray-600 whitespace-pre-line">{note.content}</p>
+                </div>
+                <div className="flex justify-between items-center text-xs text-gray-500">
                   <span>{new Date(note.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
               {activeView !== 'All' && activeView !== 'AssignedToMe' && (
-                <div className={`flex flex-col ${getNoteColor(note)} bg-amber-200 rounded-b-xl p-4 shadow-sm hover:shadow-md transition-shadow gap-1 mt-[3px] text-xs text-gray-600 pt-2 py-2`}>
+                <div className={`flex flex-col ${getNoteColor(note)} bg-amber-200 rounded-b-xl p-4 shadow-sm hover:shadow-md transition-shadow gap-1 mt-[3px] text-xs text-gray-600 pt-2 py-2 h-[100px]`}>
                   <div className="flex items-center gap-1">
                     <span className="font-medium">Assigned By:</span>
                     <span>{note.userId?.firstname} {note.userId?.lastname}</span>
@@ -482,7 +475,7 @@ function App() {
               )}
               {
                 activeView === 'AssignedToMe' && (
-                  <div className={`flex flex-col ${getNoteColor(note)} bg-amber-200 rounded-b-xl p-4 shadow-sm hover:shadow-md transition-shadow gap-1 mt-[3px] text-xs text-gray-600 pt-2 py-2`}>
+                  <div className={`flex flex-col ${getNoteColor(note)} bg-amber-200 rounded-b-xl p-4 shadow-sm hover:shadow-md transition-shadow gap-1 mt-[3px] text-xs text-gray-600 pt-2 py-2 h-[60px]`}>
                     <div className="flex items-center justify-between mt-2">
                       <label className="inline-flex items-center cursor-pointer">
                         <input

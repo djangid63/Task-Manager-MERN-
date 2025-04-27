@@ -1,40 +1,41 @@
 const mongoose = require('mongoose')
-const { type } = require('os')
 
 const Schema = mongoose.Schema
 
 const userSchema = new Schema({
+  // Common fields for all users
   firstname: {
     type: String,
     required: true
   },
   lastname: {
-    type: String,
-    required: true
+    type: String
   },
   email: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   password: {
     type: String,
     required: true
   },
-  AdminId: {
-    type: Schema.Types.ObjectId,
-    ref: 'admin'
+  role: {
+    type: String,
+    enum: ['admin', 'user'],
+    default: 'user'
+  },
+  isDisabled: {
+    type: Boolean,
+    default: false
   },
 
+  // Fields specific to regular users
   otp: {
     type: Number
   },
   otpTimer: {
     type: Number
-  },
-
-  isDisabled: {
-    type: Boolean,
-    default: false
   }
 
 }, { timestamps: true, versionKey: false })

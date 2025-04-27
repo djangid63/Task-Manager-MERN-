@@ -11,7 +11,7 @@ const adminRouter = require('./Routes/adminRouter')
 app.use(cors())
 app.use(express.json())
 
-const mongoURL = 'mongodb://localhost:27017/TaskManger'
+const mongoURL = 'mongodb://localhost:27017/TaskManagerPro'
 
 mongoose.connect(mongoURL)
   .then(() => console.log("DB connected"))

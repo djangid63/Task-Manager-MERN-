@@ -21,6 +21,11 @@ const Dashboard = () => {
   const [completedTaskData, setCompletedTaskData] = useState([]);
   const [completedTaskCount, setCompletedTaskCount] = useState(0);
 
+  // State for users with task assignments
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [selectedFilteredUser, setSelectedFilteredUser] = useState(null);
+  const [userTasks, setUserTasks] = useState([]);
+
   // State to track which card is selected
   const [selectedCard, setSelectedCard] = useState('admins');
 
@@ -97,16 +102,76 @@ const Dashboard = () => {
     }
   };
 
+  // Function to fetch users who have assigned or been assigned tasks
+  const fetchUsersWithTasks = async () => {
+    try {
+      const tasksResponse = await axios.get(`${BASE_URL}/task/getTask`);
+      const allTasks = tasksResponse.data.taskData;
+
+      const usersResponse = await axios.get(`${BASE_URL}/user/getUsers`);
+      const allUsers = usersResponse.data.userData;
+
+      const usersWithTasks = allUsers.filter(user => {
+        const userCreatedTasks = allTasks.some(task =>
+          task.userId && task.userId._id === user._id
+        );
+
+        const userAssignedTasks = allTasks.some(task =>
+          task.assignedTo && task.assignedTo._id === user._id
+        );
+
+        return userCreatedTasks || userAssignedTasks;
+      }).map(user => {
+        const taskCount = allTasks.filter(task =>
+          (task.userId && task.userId._id === user._id) ||
+          (task.assignedTo && task.assignedTo._id === user._id)
+        ).length;
+
+        return { ...user, taskCount };
+      });
+
+      setFilteredUsers(usersWithTasks);
+    } catch (error) {
+      console.log("Error fetching users with tasks", error);
+    }
+  };
+
+  // Function to fetch tasks for a specific user
+  const fetchTasksForUser = async (userId) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/task/getTask`);
+      const allTasks = response.data.taskData;
+
+      const userSpecificTasks = allTasks.filter(task =>
+        (task.userId && task.userId._id === userId) ||
+        (task.assignedTo && task.assignedTo._id === userId)
+      );
+
+      setUserTasks(userSpecificTasks);
+      setSelectedFilteredUser(filteredUsers.find(user => user._id === userId));
+    } catch (error) {
+      console.log("Error fetching tasks for user", error);
+    }
+  };
+
+  const handleUserClick = (userId) => {
+    fetchTasksForUser(userId);
+  };
+
+  const clearSelectedUser = () => {
+    setSelectedFilteredUser(null);
+    setUserTasks([]);
+  };
+
   useEffect(() => {
     fetchAdminCount();
     fetchUserCount();
     fetchTaskCount();
     fetchDisableTaskCount();
     getAdmins();
-    fetchUsers(); // Load users for task assignment
+    fetchUsers();
   }, []);
 
-  // Show admin Data
   const getAdmins = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/admin/getAdmins`)
@@ -177,6 +242,21 @@ const Dashboard = () => {
   // Function to handle card click
   const handleCardClick = (cardType) => {
     setSelectedCard(cardType === selectedCard ? null : cardType);
+
+    if (cardType === 'tasks') {
+      getTask();
+      fetchUsersWithTasks();
+    } else if (cardType === 'admins') {
+      getAdmins();
+    } else if (cardType === 'users') {
+      getUsers();
+    } else if (cardType === 'pendingTasks') {
+      getTask();
+    } else if (cardType === 'completedTasks') {
+      getTask();
+    } else if (cardType === 'disabledTasks') {
+      getDisabledTask();
+    }
   };
 
   // Card colors
@@ -240,18 +320,18 @@ const Dashboard = () => {
                 <tr>
                   <th className="py-3 px-4 text-left">Name</th>
                   <th className="py-3 px-4 text-left">Email</th>
-                  <th className="py-3 px-4 text-left">Password</th>
+                  <th className="py-3 px-4 text-left">Role</th>
                   <th className="py-3 px-4 text-left">Access</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {adminData.map(admin => (
                   <tr key={admin._id} className="hover:bg-gray-50 transition-colors duration-200">
-                    <td className="py-3 px-4 text-gray-800">{admin.name}</td>
+                    <td className="py-3 px-4 text-gray-800">{admin.firstname} {admin.lastname || ''}</td>
                     <td className="py-3 px-4 text-gray-600">{admin.email}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                        {admin.password}
+                        {admin.role}
                       </span>
                     </td>
                     <td className="py-3 px-4">
@@ -291,18 +371,18 @@ const Dashboard = () => {
                 <tr>
                   <th className="py-3 px-4 text-left">Name</th>
                   <th className="py-3 px-4 text-left">Email</th>
-                  <th className="py-3 px-4 text-left">password</th>
+                  <th className="py-3 px-4 text-left">Role</th>
                   <th className="py-3 px-4 text-left">Access</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {userData.map(user => (
                   <tr key={user._id} className="hover:bg-gray-50 transition-colors duration-200">
-                    <td className="py-3 px-4 text-gray-800">{user.firstname + " " + user.lastname}</td>
+                    <td className="py-3 px-4 text-gray-800">{user.firstname + " " + (user.lastname || '')}</td>
                     <td className="py-3 px-4 text-gray-600">{user.email}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                        {user.password}
+                        {user.role}
                       </span>
                     </td>
                     <td className="py-3 px-4">
@@ -333,6 +413,74 @@ const Dashboard = () => {
         </div>
       );
     } else if (selectedCard === 'tasks') {
+      // If a filtered user is selected, show their tasks
+      if (selectedFilteredUser) {
+        return (
+          <div className="mt-8 animate-fadeIn">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">
+                Tasks for {selectedFilteredUser.firstname} {selectedFilteredUser.lastname}
+              </h3>
+              <button
+                onClick={clearSelectedUser}
+                className="text-blue-600 hover:text-blue-800 flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                </svg>
+                Back to all tasks
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
+                <thead className="bg-gray-100 text-gray-700">
+                  <tr>
+                    <th className="py-3 px-4 text-left">Title</th>
+                    <th className="py-3 px-4 text-left">Content</th>
+                    <th className="py-3 px-4 text-left">Role</th>
+                    <th className="py-3 px-4 text-left">Status</th>
+                    <th className="py-3 px-4 text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {userTasks.map(task => (
+                    <tr key={task._id} className="hover:bg-gray-50 transition-colors duration-200">
+                      <td className="py-3 px-4 text-gray-800">{task.title}</td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                          {task.content}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-gray-600">
+                        {task.userId && task.userId._id === selectedFilteredUser._id
+                          ? 'Created by this user'
+                          : 'Assigned to this user'}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 text-xs rounded-full ${task.status === 'completed'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'}`}>
+                          {task.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <button onClick={() => openEditTaskModal(task)} className="text-blue-500 hover:text-blue-700">Edit</button>
+                        <button onClick={() => deleteTask(task._id)} className="text-red-500 hover:text-red-700 ml-2">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {userTasks.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  No tasks found for this user.
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="mt-8 animate-fadeIn">
           <h3 className="text-xl font-semibold mb-4 text-gray-800">Task Details</h3>
@@ -367,6 +515,52 @@ const Dashboard = () => {
                     <td className="py-3 px-4">
                       <button onClick={() => openEditTaskModal(task)} className="text-blue-500 hover:text-blue-700">Edit</button>
                       <button onClick={() => deleteTask(task._id)} className="text-red-500 hover:text-red-700 ml-2">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Users With Tasks Section */}
+          <h3 className="text-xl font-semibold mt-8 mb-4 text-gray-800">Users With Tasks</h3>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
+              <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                  <th className="py-3 px-4 text-left">Name</th>
+                  <th className="py-3 px-4 text-left">Email</th>
+                  <th className="py-3 px-4 text-left">Role</th>
+                  <th className="py-3 px-4 text-left">Access</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredUsers.map(user => (
+                  <tr key={user._id}
+                    className="hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+                    onClick={() => handleUserClick(user._id)}>
+                    <td className="py-3 px-4 text-gray-800">{user.firstname + " " + (user.lastname || '')}</td>
+                    <td className="py-3 px-4 text-gray-600">{user.email}</td>
+                    <td className="py-3 px-4 text-gray-600">{user.role === 'admin' ? 'Administrator' : 'Regular User'}</td>
+                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                      <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                        <input
+                          type="checkbox"
+                          id={`toggle-${user._id}`}
+                          checked={!user.isDisabled}
+                          onChange={() => toggleUserAccess(user._id, user.isDisabled)}
+                          className="sr-only peer"
+                        />
+                        <label
+                          htmlFor={`toggle-${user._id}`}
+                          className="block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer peer-checked:bg-green-500"
+                        >
+                          <span className="absolute transform transition-transform duration-300 ease-in-out h-6 w-6 rounded-full bg-white shadow-md left-0 peer-checked:translate-x-4"></span>
+                        </label>
+                      </div>
+                      <span className={`text-xs ml-2 ${user.isDisabled ? 'text-red-500' : 'text-green-500'}`}>
+                        {user.isDisabled ? 'Disabled' : 'Enabled'}
+                      </span>
                     </td>
                   </tr>
                 ))}

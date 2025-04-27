@@ -34,7 +34,15 @@ exports.SignUpUser = async (req, res) => {
     //   return res.status(500).json({ message: "Failed to send OTP email" });
     // }
 
-    const signData = new userModel({ firstname, lastname, email, password: hashedPassword, otp, otpTimer })
+    const signData = new userModel({
+      firstname,
+      lastname,
+      email,
+      password: hashedPassword,
+      role: 'user',
+      otp,
+      otpTimer
+    })
     const saveData = await signData.save()
     return res.status(201).json({ success: true, message: "Sign up successfully", data: saveData })
   } catch (error) {
@@ -46,7 +54,8 @@ exports.SignUpUser = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await userModel.findOne({ email });
+    // Only match regular users, not admins
+    const user = await userModel.findOne({ email, role: 'user' });
 
     if (!user) {
       return res.status(404).json({ success: false, message: "Please sign up before logging in" });
@@ -73,12 +82,11 @@ exports.login = async (req, res) => {
     // await user.save();
 
     // await sendOtpEmail(email, otp, user.firstname, SENDER_EMAIL, mailkey);
-    const token = jwt.sign({ email: user.email }, secretKey);
+    const token = jwt.sign({ email: user.email, role: user.role }, secretKey);
 
     return res.status(200).json({
       success: true,
-      message: "Please verify your OTP sent to your email",
-      // requireOtp: true
+      message: "Login successful",
       token
     });
   } catch (error) {
@@ -95,7 +103,7 @@ exports.verifyOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: "Email and OTP are required" });
     }
 
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ email, role: 'user' });
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -112,7 +120,7 @@ exports.verifyOtp = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid OTP" });
     }
 
-    const token = jwt.sign({ email: user.email }, secretKey);
+    const token = jwt.sign({ email: user.email, role: user.role }, secretKey);
 
     return res.status(200).json({
       success: true,
@@ -134,7 +142,7 @@ exports.resendOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: "Email is required" });
     }
 
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ email, role: 'user' });
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
@@ -168,18 +176,17 @@ exports.resendOtp = async (req, res) => {
 
 exports.count = async (req, res) => {
   try {
-    const totalUser = await userModel.countDocuments();
+    const totalUser = await userModel.countDocuments({ role: 'user' });
     return res.status(200).json({ status: true, count: totalUser });
   } catch (error) {
-    return res.status(500).json({ status: false, message: "Failed to count user", error: error.message });
+    return res.status(500).json({ status: false, message: "Failed to count users", error: error.message });
   }
 }
 
 exports.getUsers = async (req, res) => {
   try {
-
-    // Find tasks for the user only if they are not disabled
-    const users = await userModel.find()
+    // Only get regular users, not admins
+    const users = await userModel.find({ role: 'user' })
 
     return res.status(200).json({
       success: true,

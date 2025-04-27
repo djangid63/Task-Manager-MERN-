@@ -17,6 +17,7 @@ module.exports = async (req, res, next) => {
 
     try {
       const decodeToken = jwt.verify(token, secretKey);
+      // Find user regardless of role
       const user = await userModel.findOne({ email: decodeToken.email });
 
       if (!user) {
