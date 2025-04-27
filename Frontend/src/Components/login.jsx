@@ -45,34 +45,30 @@ const Login = () => {
 
       if (loginType === 'admin') {
         if (response.data.success) {
-          alert(response.data.message);
-          if (response.data.token) {
-            localStorage.setItem('token', response.data.token);
+
+          if (!response.data.token) {
+            alert("Authentication failed: No token received");
+            return;
           }
+
+          // Store token and user type
+          localStorage.setItem('token', response.data.token);
           localStorage.setItem('userType', 'admin');
+          alert(response.data.message);
           navigateTo('/dashboard');
         }
       } else if (loginType === 'user') {
-        // if (response.data.success && response.data.requireOtp) {
-        //   setShowOtpVerification(true);
-        //   setUserEmail(formData.email);
-        //   alert("Please enter the OTP sent to your email");
-        // } else if (response.data.success) {
-        //   alert(response.data.message);
-        //   localStorage.setItem('token', response.data.token);
-        //   localStorage.setItem('userType', 'user');
-        //   navigateTo('/taskMangement');
-        // }
-
-
         if (response.data.success) {
+          if (!response.data.token) {
+            alert("Authentication failed: No token received");
+            return;
+          }
+
           alert(response.data.message);
           localStorage.setItem('token', response.data.token);
           localStorage.setItem('userType', 'user');
           navigateTo('/taskMangement');
         }
-
-
       }
     } catch (error) {
       alert(error.response?.data?.message || error.message || "Login failed");

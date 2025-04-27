@@ -1,5 +1,7 @@
 const userModel = require("../Models/UserModel")
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+const secretKey = "abcsdalfhdslf"  // Using the same secret key as in auth.js
 
 
 exports.Signup = async (req, res) => {
@@ -51,7 +53,26 @@ exports.login = async (req, res) => {
       return res.status(404).json({ success: false, message: "Password is incorrect" })
     }
 
-    return res.status(201).json({ success: true, message: "Login successful" })
+    // Generate JWT token
+    const payload = {
+      id: user._id,
+      email: user.email,
+      role: user.role
+    }
+    const token = jwt.sign(payload, secretKey, { expiresIn: '1d' });
+
+    return res.status(201).json({
+      success: true,
+      message: "Login successful",
+      token: token,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        role: user.role
+      }
+    })
   } catch (error) {
     console.log("Login error:", error);
     return res.status(500).json({ success: false, message: "Login failed" });

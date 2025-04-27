@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BASE_URL from './../api';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [adminData, setAdminData] = useState([])
   const [adminCount, setAdminCount] = useState(0);
 
@@ -37,7 +39,7 @@ const Dashboard = () => {
     title: '',
     content: '',
     category: '',
-    status: 'Pending'
+    status: 'pending'  // Changed from 'Pending' to 'pending' to match enum
   });
   const [userOptions, setUserOptions] = useState([]);
   const [selectedUser, setSelectedUser] = useState('');
@@ -143,8 +145,7 @@ const Dashboard = () => {
       const allTasks = response.data.taskData;
 
       const userSpecificTasks = allTasks.filter(task =>
-        (task.userId && task.userId._id === userId) ||
-        (task.assignedTo && task.assignedTo._id === userId)
+        task.assignedTo && task.assignedTo._id === userId
       );
 
       setUserTasks(userSpecificTasks);
@@ -164,13 +165,31 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    // Check if token exists in localStorage
+    const token = localStorage.getItem('token');
+    const userType = localStorage.getItem('userType');
+
+    if (!token) {
+      console.warn("No authentication token found. Redirecting to login...");
+      // Redirect to login page if no token is found
+      navigate('/');
+      return;
+    }
+
+    if (userType !== 'admin') {
+      console.warn("Unauthorized access attempt. Redirecting to appropriate page...");
+      // Redirect non-admin users to task management
+      navigate('/taskMangement');
+      return;
+    }
+
     fetchAdminCount();
     fetchUserCount();
     fetchTaskCount();
     fetchDisableTaskCount();
     getAdmins();
     fetchUsers();
-  }, []);
+  }, [navigate]); // Adding navigate to the dependency array
 
   const getAdmins = async () => {
     try {
@@ -373,6 +392,7 @@ const Dashboard = () => {
                   <th className="py-3 px-4 text-left">Email</th>
                   <th className="py-3 px-4 text-left">Role</th>
                   <th className="py-3 px-4 text-left">Access</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -404,6 +424,18 @@ const Dashboard = () => {
                       <span className={`text-xs ml-2 ${user.isDisabled ? 'text-red-500' : 'text-green-500'}`}>
                         {user.isDisabled ? 'Disabled' : 'Enabled'}
                       </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => openCreateTaskModal(user._id)}
+                        className="inline-flex items-center px-2 py-1 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-indigo-500"
+                        disabled={user.isDisabled}
+                      >
+                        <svg className="-ml-0.5 mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                        </svg>
+                        Assign Task
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -701,15 +733,15 @@ const Dashboard = () => {
   };
 
   // Open modal for creating a new task
-  const openCreateTaskModal = () => {
+  const openCreateTaskModal = (userId = '') => {
     setModalType('create');
     setTaskForm({
       title: '',
       content: '',
       category: '',
-      status: 'Pending'
+      status: 'pending'  // Changed from 'Pending' to 'pending' to match enum
     });
-    setSelectedUser('');
+    setSelectedUser(userId);
     setShowTaskModal(true);
   };
 
@@ -733,24 +765,40 @@ const Dashboard = () => {
       // Get the token from localStorage
       const token = localStorage.getItem('token');
 
+      if (!token) {
+        console.error("No authentication token found in localStorage");
+        alert("You need to be logged in to create tasks");
+        return;
+      }
+
       const taskData = {
         ...taskForm,
-        userId: selectedUser
+        assignedTo: selectedUser
       };
 
-      // Include auth token in headers
-      await axios.post(`${BASE_URL}/task/addTask`, taskData, {
+      console.log("Creating task with token:", token);
+      console.log("Task data:", taskData);
+
+      // Include auth token in headers with the correct Bearer format
+      const response = await axios.post(`${BASE_URL}/task/addTask`, taskData, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
+      console.log("Task created successfully:", response.data);
       setShowTaskModal(false);
       fetchTaskCount();
       getTask();
+      alert("Task created successfully!");
     } catch (error) {
       console.error("Error creating task:", error);
-      alert("Failed to create task. Please try again.");
+      if (error.response) {
+        console.error("Server response:", error.response.data);
+        console.error("Status code:", error.response.status);
+      }
+      alert(`Failed to create task: ${error.response?.data?.message || error.message}`);
     }
   };
 

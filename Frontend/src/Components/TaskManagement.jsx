@@ -80,7 +80,6 @@ function App() {
     window.location.href = '/';
   };
 
-  // To delete the data on the basis of _ID
   async function handleDelete(id) {
     try {
       const config = {
