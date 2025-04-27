@@ -3,7 +3,6 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const userSchema = new Schema({
-  // Common fields for all users
   firstname: {
     type: String,
     required: true
@@ -30,7 +29,6 @@ const userSchema = new Schema({
     default: false
   },
 
-  // Fields specific to regular users
   otp: {
     type: Number
   },

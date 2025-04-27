@@ -187,7 +187,12 @@ function App() {
             'Authorization': `Bearer ${token}`
           }
         }
-        const response = await axios.post('http://localhost:5000/task/addTask', newNote, config);
+        const noteWithUser = {
+          ...newNote,
+          userEmail: currentUser.email
+        };
+        const response = await axios.post('http://localhost:5000/task/addTask', noteWithUser, config);
+        console.log('Note added successfully:', response.data);
 
       } catch (error) {
         console.error("Error while posting", error);
@@ -382,7 +387,7 @@ function App() {
                 >
                   <option value="" disabled>Assign to user</option>
                   {users
-                    .filter(user => !user.isDisabled) // Only show enabled users
+                    .filter(user => !user.isDisabled)
                     .map(user => (
                       <option key={user._id} value={user._id}>
                         {user.firstname} {user.lastname}

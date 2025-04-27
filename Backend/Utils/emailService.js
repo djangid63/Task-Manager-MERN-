@@ -37,7 +37,7 @@ const sendOtpEmail = async (email, otp, firstname, senderEmail, mailkey) => {
   }
 };
 
-const sendCreationEmail = async (email, firstname, lastname, task, senderEmail, mailkey) => {
+const sendCreationEmail = async (email, firstname, lastname, title, senderEmail, mailkey) => {
   try {
     const transporter = createTransporter(senderEmail, mailkey);
     const mailOptions = {
@@ -47,7 +47,7 @@ const sendCreationEmail = async (email, firstname, lastname, task, senderEmail, 
       html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
         <h2>Hello ${firstname} ${lastname},</h2>
-        <p>Your task has been created successfully!</p>
+        <p>You got a new task title ${title}!</p>
         <div style="background-color: #f8f9fa; padding: 15px; margin: 20px 0; border-left: 4px solid #4CAF50;">
         <p>You can view and manage your tasks from your dashboard.</p>
         </div>

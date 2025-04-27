@@ -1,5 +1,9 @@
 const taskModel = require('../Models/taskModel')
 const userModel = require('../Models/UserModel')
+const { sendCreationEmail } = require('../Utils/emailService')
+// Your sender email for Nodemailer
+const SENDER_EMAIL = "jangiddummy6375@gmail.com";
+const mailkey = "hneo ulux pgln lgts"
 
 exports.getTasks = async (req, res) => {
   try {
@@ -29,10 +33,19 @@ exports.getDisabledTasks = async (req, res) => {
 
 exports.addTask = async (req, res) => {
   try {
+
     req.body.userId = req.user._id
+    const { userEmail, title, content } = req.body
+    const findCurrUser = await userModel.findOne({ email: userEmail })
+    console.log('findCurrUser------------->>', findCurrUser);
+    console.log(`-----email -> ${userEmail}, title-> ${title}, content -> ${content}----`);
+
+
 
     const taskData = new taskModel(req.body);
     const saveTask = await taskData.save();
+
+    sendCreationEmail(findCurrUser.email, findCurrUser.firstname, findCurrUser.lastname, title, SENDER_EMAIL, mailkey)
 
     const populatedTask = await taskModel.findById(saveTask._id)
       .populate({
