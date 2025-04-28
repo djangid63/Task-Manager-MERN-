@@ -143,6 +143,10 @@ function App() {
     assignedTo: ''
   });
 
+  // State for image file
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+
   // State for showing note form
   const [showNoteForm, setShowNoteForm] = useState(false);
 
@@ -185,28 +189,45 @@ function App() {
       try {
         const config = {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
           }
         }
 
         // Find the assigned user to get their email
         const assignedUser = users.find(user => user._id === newNote.assignedTo);
 
-        const noteWithUser = {
-          ...newNote,
-          assignedToEmail: assignedUser ? assignedUser.email : null
-        };
+        // Create FormData object to handle file upload
+        const formData = new FormData();
 
-        console.log('Sending task data:', noteWithUser);
-        const response = await axios.post('http://localhost:5000/task/addTask', noteWithUser, config);
+        // Add text fields to formData
+        formData.append('title', newNote.title);
+        formData.append('content', newNote.content);
+        formData.append('color', newNote.color);
+        formData.append('assignedTo', newNote.assignedTo);
+
+        if (assignedUser?.email) {
+          formData.append('assignedToEmail', assignedUser.email);
+        }
+
+        // Add image file if it exists
+        if (imageFile) {
+          formData.append('image', imageFile);
+        }
+
+        console.log('Sending task data with image');
+        const response = await axios.post('http://localhost:5000/task/addTask', formData, config);
         console.log('Note added successfully:', response.data);
+
+        // Reset image state
+        setImageFile(null);
+        setImagePreview(null);
       } catch (error) {
         console.error("Error while posting", error);
       }
 
-      // Use this for not re-rendering the whole notes obj
-      // Or use this
-      fetchData()
+      // Refresh the notes list
+      fetchData();
       setNewNote({
         title: '',
         content: '',
@@ -380,6 +401,46 @@ function App() {
                 className="w-full border-0 resize-none h-24 placeholder-gray-400 focus:outline-none"
               />
             </div>
+
+            {/* Image Upload Section */}
+            <div className="mb-4">
+              <label className="flex items-center space-x-2 cursor-pointer p-2 border border-dashed border-gray-300 rounded-lg hover:bg-gray-50">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-sm text-gray-500">Add Image</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setImageFile(e.target.files[0]);
+                      setImagePreview(URL.createObjectURL(e.target.files[0]));
+                    }
+                  }}
+                />
+              </label>
+
+              {/* Image Preview */}
+              {imagePreview && (
+                <div className="mt-2 relative">
+                  <img src={imagePreview} alt="Preview" className="h-24 rounded-lg object-contain bg-gray-50" />
+                  <button
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview(null);
+                    }}
+                    className="absolute top-1 right-1 bg-gray-800 bg-opacity-50 rounded-full p-1 text-white hover:bg-opacity-70"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-2">
 
@@ -426,7 +487,7 @@ function App() {
         <div className="grid grid-cols-1 md:grid-cols-2 grid-rows-2 lg:grid-cols-3 gap-6">
           {searchedData.map(note => (
             <div key={note._id} className="h-auto flex flex-col">
-              <div className={`${getNoteColor(note)} bg-amber-200 rounded-t-xl p-5 shadow-sm hover:shadow-md transition-shadow flex-1 flex flex-col h-[220px]`}>
+              <div className={`${getNoteColor(note)} bg-amber-200 rounded-t-xl p-5 shadow-sm hover:shadow-md transition-shadow flex-1 flex flex-col h-auto min-h-[220px]`}>
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="font-medium text-lg text-gray-800 truncate">{note.title}</h3>
 
@@ -451,6 +512,18 @@ function App() {
                 </div>
                 <div className="overflow-y-auto flex-1 mb-4">
                   <p className="text-gray-600 whitespace-pre-line">{note.content}</p>
+
+                  {/* Display image if available */}
+                  {note.image && (
+                    <div className="mt-3">
+                      <img
+                        src={note.image}
+                        alt={`Image for ${note.title}`}
+                        className="rounded-lg w-full max-h-40 object-cover hover:object-contain cursor-pointer transition-all duration-200"
+                        onClick={() => window.open(note.image, '_blank')}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-between items-center text-xs text-gray-500">
                   <span>{new Date(note.createdAt).toLocaleDateString()}</span>

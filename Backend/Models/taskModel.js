@@ -1,4 +1,5 @@
 const mongoose = require("mongoose")
+const { type } = require("os")
 const Schema = mongoose.Schema
 
 const taskSchema = new Schema({
@@ -25,6 +26,9 @@ const taskSchema = new Schema({
     type: String,
     enum: ['pending', 'completed'],
     default: 'pending'
+  },
+  image: {
+    type: String,
   }
 }, { timestamps: true })
 

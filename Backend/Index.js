@@ -3,6 +3,9 @@ const mongoose = require('mongoose')
 const cors = require('cors');
 const app = express()
 const port = 5000;
+const fileUpload = require('express-fileupload')
+
+
 
 const taskRouter = require("./Routes/taskRouter")
 const userRouter = require("./Routes/userRouter")
@@ -10,6 +13,8 @@ const adminRouter = require('./Routes/adminRouter')
 
 app.use(cors())
 app.use(express.json())
+app.use(fileUpload())
+app.use(express.urlencoded({ extended: true }))
 
 const mongoURL = 'mongodb://localhost:27017/TaskManagerPro'
 

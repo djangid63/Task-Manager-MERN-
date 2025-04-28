@@ -1,9 +1,15 @@
 const taskModel = require('../Models/taskModel')
 const userModel = require('../Models/UserModel')
+const fileupload = require('express-fileupload')
+const { uploadFile } = require('../Utils/cloudinary')
 const { sendCreationEmail, sendStatusUpdateEmail } = require('../Utils/emailService')
+
+
 // Your sender email for Nodemailer
 const SENDER_EMAIL = "jangiddummy6375@gmail.com";
 const mailkey = "hneo ulux pgln lgts"
+
+
 
 exports.getTasks = async (req, res) => {
   try {
@@ -33,10 +39,16 @@ exports.getDisabledTasks = async (req, res) => {
 
 exports.addTask = async (req, res) => {
   try {
-    req.body.userId = req.user._id
-    const { userEmail, title, content, assignedTo, assignedToEmail } = req.body
+    let imageUrl = ''
+    if (req.files) {
+      const uploadResults = await uploadFile(req.files)
+      if (uploadResults.length) imageUrl = uploadResults[0].secure_url
+    }
 
-    const taskData = new taskModel(req.body);
+    req.body.userId = req.user._id
+    
+    const { userEmail, title, content, assignedTo, assignedToEmail } = req.body
+    const taskData = new taskModel({ ...req.body, image: imageUrl });
     const saveTask = await taskData.save();
 
 
